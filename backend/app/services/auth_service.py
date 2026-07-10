@@ -59,7 +59,7 @@ class AuthService:
         # TODO: Send verification email (placeholder)
         # await email_service.send_verification(user.email, verification_token)
 
-        return UserResponse.model_validate(user)
+        return UserResponse.from_user(user)
 
     # ── Login ────────────────────────────────────────────────────────────
 
@@ -171,4 +171,4 @@ class AuthService:
         user = await self._user_repo.get_by_id(user_id)
         if not user:
             raise NotFoundError("User not found.")
-        return UserResponse.model_validate(user)
+        return UserResponse.from_user(user)

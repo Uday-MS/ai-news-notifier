@@ -18,33 +18,43 @@ import RegisterPage from '@/pages/RegisterPage';
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/ResetPasswordPage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import OnboardingPage from '@/pages/OnboardingPage';
 
-/** Redirects unauthenticated users to /login */
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-surface">
+      <span className="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
+    </div>
+  );
+}
+
+/** Redirects unauthenticated users to /login. Redirects to /onboarding if not completed. */
 function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <span className="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingScreen />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user && !user.onboarding_completed) return <Navigate to="/onboarding" replace />;
 
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+  return <Outlet />;
+}
+
+/** Only accessible when authenticated AND onboarding is NOT complete. */
+function OnboardingRoute() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) return <LoadingScreen />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.onboarding_completed) return <Navigate to="/" replace />;
+
+  return <Outlet />;
 }
 
 /** Redirects authenticated users to / */
 function GuestRoute() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <span className="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingScreen />;
 
   return isAuthenticated ? <Navigate to="/" replace /> : <Outlet />;
 }
@@ -69,6 +79,12 @@ export const router = createBrowserRouter([
           { path: '*', element: <NotFoundPage /> },
         ],
       },
+    ],
+  },
+  {
+    element: <OnboardingRoute />,
+    children: [
+      { path: '/onboarding', element: <OnboardingPage /> },
     ],
   },
   {

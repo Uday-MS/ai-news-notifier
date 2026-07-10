@@ -119,7 +119,7 @@ async def verify_email(
 @router.get("/me")
 async def get_me(user: User = Depends(get_current_user)):
     """Get the currently authenticated user."""
-    user_data = UserResponse.model_validate(user)
+    user_data = UserResponse.from_user(user)
     return success_response(data=user_data.model_dump(mode="json"))
 
 

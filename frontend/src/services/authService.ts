@@ -11,6 +11,17 @@ export interface AuthUser {
   role: string;
   is_verified: boolean;
   created_at: string;
+  // Sprint 2 — profile fields
+  username?: string;
+  bio?: string;
+  profile_image?: string;
+  college?: string;
+  degree?: string;
+  graduation_year?: number;
+  country?: string;
+  timezone?: string;
+  notification_preference: string;
+  onboarding_completed: boolean;
 }
 
 export interface TokenData {

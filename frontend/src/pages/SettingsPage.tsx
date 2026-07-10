@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useTheme, type Theme } from '@/hooks/useTheme';
+import { useAuth } from '@/store/AuthContext';
+import { updateProfile } from '@/services/userService';
 import { cn } from '@/utils/cn';
 
 const THEME_OPTIONS: { value: Theme; label: string; icon: string }[] = [
@@ -11,6 +14,59 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: string }[] = [
 export default function SettingsPage() {
   useDocumentTitle('Settings — AI News Notifier');
   const { theme, setTheme } = useTheme();
+  const { user, refreshUser } = useAuth();
+
+  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
+  const [college, setCollege] = useState('');
+  const [degree, setDegree] = useState('');
+  const [graduationYear, setGraduationYear] = useState('');
+  const [country, setCountry] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+
+  // Populate from current user
+  useEffect(() => {
+    if (user) {
+      setFullName(user.full_name ?? '');
+      setUsername(user.username ?? '');
+      setBio(user.bio ?? '');
+      setCollege(user.college ?? '');
+      setDegree(user.degree ?? '');
+      setGraduationYear(user.graduation_year?.toString() ?? '');
+      setCountry(user.country ?? '');
+    }
+  }, [user]);
+
+  async function handleSaveProfile() {
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    try {
+      const result = await updateProfile({
+        full_name: fullName || undefined,
+        username: username || undefined,
+        bio: bio || undefined,
+        college: college || undefined,
+        degree: degree || undefined,
+        graduation_year: graduationYear ? parseInt(graduationYear) : undefined,
+        country: country || undefined,
+      });
+      if (result.success) {
+        await refreshUser();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        setError(result.error?.message ?? 'Failed to save.');
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -53,34 +109,78 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
-
-          <div>
-            <label className="font-body text-sm font-medium text-on-surface-variant block mb-2">Data Density</label>
-            <select className="input-field">
-              <option>Comfortable (Standard)</option>
-              <option>Compact (High Density)</option>
-              <option>Spacious (Presentation)</option>
-            </select>
-          </div>
         </section>
 
-        {/* Account Section */}
+        {/* Account Section — wired to real user data */}
         <section className="bg-surface-container-low rounded-2xl p-5">
           <h3 className="font-body font-bold text-on-surface text-lg mb-1 flex items-center gap-2">
             <span className="material-symbols-outlined text-xl">person</span>
             Account
           </h3>
-          <p className="text-on-surface-variant text-sm font-body mb-4">Manage your account information.</p>
+          <p className="text-on-surface-variant text-sm font-body mb-4">Manage your profile information.</p>
 
           <div className="flex flex-col gap-4">
-            <div>
-              <label className="font-body text-sm font-medium text-on-surface-variant block mb-1.5">Full Name</label>
-              <input className="input-field" type="text" defaultValue="Dr. Aris Thorne" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="font-body text-sm font-medium text-on-surface-variant block mb-1.5">Full Name</label>
+                <input className="input-field" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              </div>
+              <div>
+                <label className="font-body text-sm font-medium text-on-surface-variant block mb-1.5">Username</label>
+                <input className="input-field" type="text" placeholder="@username" value={username} onChange={(e) => setUsername(e.target.value)} />
+              </div>
             </div>
             <div>
               <label className="font-body text-sm font-medium text-on-surface-variant block mb-1.5">Email</label>
-              <input className="input-field" type="email" defaultValue="a.thorne@example.com" />
+              <input className="input-field" type="email" value={user?.email ?? ''} disabled />
             </div>
+            <div>
+              <label className="font-body text-sm font-medium text-on-surface-variant block mb-1.5">Bio</label>
+              <textarea className="input-field resize-none h-20" value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="font-body text-sm font-medium text-on-surface-variant block mb-1.5">College</label>
+                <input className="input-field" type="text" value={college} onChange={(e) => setCollege(e.target.value)} />
+              </div>
+              <div>
+                <label className="font-body text-sm font-medium text-on-surface-variant block mb-1.5">Degree</label>
+                <input className="input-field" type="text" value={degree} onChange={(e) => setDegree(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="font-body text-sm font-medium text-on-surface-variant block mb-1.5">Graduation Year</label>
+                <input className="input-field" type="number" min={1950} max={2040} value={graduationYear} onChange={(e) => setGraduationYear(e.target.value)} />
+              </div>
+              <div>
+                <label className="font-body text-sm font-medium text-on-surface-variant block mb-1.5">Country</label>
+                <input className="input-field" type="text" value={country} onChange={(e) => setCountry(e.target.value)} />
+              </div>
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-2 text-error p-3 bg-error-container rounded-lg">
+                <span className="material-symbols-outlined text-lg">error</span>
+                <span className="font-body text-sm">{error}</span>
+              </div>
+            )}
+
+            {saved && (
+              <div className="flex items-center gap-2 p-3 bg-primary-container rounded-lg">
+                <span className="material-symbols-outlined text-lg text-primary icon-fill">check_circle</span>
+                <span className="font-body text-sm text-on-surface">Profile saved successfully.</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleSaveProfile}
+              disabled={saving}
+              className="self-start bg-primary text-on-primary px-6 py-2.5 rounded-full font-bold text-sm font-body hover:opacity-90 transition-opacity border-none cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            >
+              {saving && <span className="w-4 h-4 border-2 border-transparent border-t-current rounded-full animate-spin" />}
+              {saving ? 'Saving...' : 'Save Profile'}
+            </button>
           </div>
         </section>
 
@@ -96,7 +196,7 @@ export default function SettingsPage() {
             <div className="flex justify-between items-center py-2">
               <div>
                 <p className="font-body font-medium text-sm text-on-surface">Password</p>
-                <p className="font-body text-sm text-on-surface-variant">Last changed 45 days ago</p>
+                <p className="font-body text-sm text-on-surface-variant">Change your account password</p>
               </div>
               <button className="px-4 py-2 rounded-full border border-outline text-on-surface font-body font-bold text-sm hover:bg-surface-container transition-colors bg-transparent cursor-pointer">
                 Update
@@ -109,15 +209,6 @@ export default function SettingsPage() {
               </div>
               <button className="px-4 py-2 rounded-full bg-primary text-on-primary font-body font-bold text-sm hover:opacity-90 transition-opacity border-none cursor-pointer">
                 Enable
-              </button>
-            </div>
-            <div className="flex justify-between items-center py-2 border-t border-outline">
-              <div>
-                <p className="font-body font-medium text-sm text-on-surface">Active Sessions</p>
-                <p className="font-body text-sm text-on-surface-variant">1 device signed in</p>
-              </div>
-              <button className="px-4 py-2 rounded-full border border-outline text-on-surface font-body font-bold text-sm hover:bg-surface-container transition-colors bg-transparent cursor-pointer">
-                Manage
               </button>
             </div>
           </div>

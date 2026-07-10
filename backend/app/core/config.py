@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
 
+    # ── Collector Engine ─────────────────────────────────────────────────
+    COLLECTOR_LOG_LEVEL: str = "INFO"
+    GITHUB_API_TOKEN: str = ""
+    COLLECTOR_REQUEST_TIMEOUT: int = 30
+    COLLECTOR_MAX_ITEMS_PER_RUN: int = 100
+
     @property
     def is_production(self) -> bool:
         return self.APP_ENV == "production"
