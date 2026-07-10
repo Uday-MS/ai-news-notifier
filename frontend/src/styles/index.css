@@ -1,0 +1,505 @@
+/* ==========================================================================
+   AI NEWS NOTIFIER — Main Stylesheet
+   Tailwind CSS v4 + Dual Theme Design System
+   ========================================================================== */
+
+@import "tailwindcss";
+
+/* Enable class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   CSS CUSTOM PROPERTIES — Light / Dark Themes
+   ========================================================================== */
+
+:root {
+  /* Backgrounds */
+  --c-base: #ffffff;
+  --c-raised: #f7f9f9;
+  --c-elevated: #eff3f4;
+  --c-overlay: #e7e9ea;
+
+  /* Borders */
+  --c-border: #eff3f4;
+  --c-border-strong: #cfd9de;
+
+  /* Text */
+  --c-text-1: #0f1419;
+  --c-text-2: #536471;
+  --c-text-3: #8b98a5;
+
+  /* Accent */
+  --c-accent: #1d9bf0;
+  --c-accent-hover: #1a8cd8;
+  --c-accent-text: #ffffff;
+  --c-accent-dim: #e8f5fd;
+
+  /* Semantic */
+  --c-danger: #f4212e;
+  --c-danger-dim: #fde8ea;
+  --c-success: #00ba7c;
+  --c-warning: #ffad1f;
+
+  /* Inverse */
+  --c-inverse: #0f1419;
+  --c-inverse-text: #e7e9ea;
+}
+
+.dark {
+  --c-base: #000000;
+  --c-raised: #16181c;
+  --c-elevated: #1d1f23;
+  --c-overlay: #2f3336;
+
+  --c-border: #2f3336;
+  --c-border-strong: #3e4144;
+
+  --c-text-1: #e7e9ea;
+  --c-text-2: #71767b;
+  --c-text-3: #536471;
+
+  --c-accent: #1d9bf0;
+  --c-accent-hover: #1a8cd8;
+  --c-accent-text: #ffffff;
+  --c-accent-dim: #031018;
+
+  --c-danger: #f4212e;
+  --c-danger-dim: #2d0607;
+  --c-success: #00ba7c;
+  --c-warning: #ffad1f;
+
+  --c-inverse: #e7e9ea;
+  --c-inverse-text: #0f1419;
+}
+
+/* ==========================================================================
+   THEME — Design Tokens mapped to CSS Custom Properties
+   ========================================================================== */
+
+@theme {
+  /* ── Fonts ──────────────────────────────────────────────────────────── */
+  --font-headline: "Anton", sans-serif;
+  --font-display: "Anton", sans-serif;
+  --font-body: "Inter", "Archivo Narrow", sans-serif;
+  --font-label: "Vollkorn", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* ── Material 3 Tokens → Dynamic CSS Vars ──────────────────────────── */
+  --color-primary: var(--c-accent);
+  --color-on-primary: var(--c-accent-text);
+  --color-primary-container: var(--c-accent-dim);
+  --color-on-primary-container: var(--c-accent);
+  --color-primary-fixed: var(--c-accent-dim);
+  --color-primary-fixed-dim: var(--c-accent);
+  --color-on-primary-fixed: var(--c-accent-text);
+  --color-on-primary-fixed-variant: var(--c-accent);
+  --color-inverse-primary: var(--c-accent);
+
+  --color-secondary: var(--c-text-2);
+  --color-on-secondary: var(--c-accent-text);
+  --color-secondary-container: var(--c-elevated);
+  --color-on-secondary-container: var(--c-text-2);
+  --color-secondary-fixed: var(--c-elevated);
+  --color-secondary-fixed-dim: var(--c-text-2);
+  --color-on-secondary-fixed: var(--c-text-1);
+  --color-on-secondary-fixed-variant: var(--c-text-2);
+
+  --color-tertiary: var(--c-text-3);
+  --color-on-tertiary: var(--c-accent-text);
+  --color-tertiary-container: var(--c-overlay);
+  --color-on-tertiary-container: var(--c-text-2);
+  --color-tertiary-fixed: var(--c-overlay);
+  --color-tertiary-fixed-dim: var(--c-text-3);
+  --color-on-tertiary-fixed: var(--c-text-1);
+  --color-on-tertiary-fixed-variant: var(--c-text-2);
+
+  --color-surface: var(--c-base);
+  --color-surface-bright: var(--c-base);
+  --color-surface-dim: var(--c-overlay);
+  --color-surface-variant: var(--c-elevated);
+  --color-surface-tint: var(--c-accent);
+  --color-surface-container: var(--c-elevated);
+  --color-surface-container-low: var(--c-raised);
+  --color-surface-container-lowest: var(--c-base);
+  --color-surface-container-high: var(--c-overlay);
+  --color-surface-container-highest: var(--c-border-strong);
+  --color-on-surface: var(--c-text-1);
+  --color-on-surface-variant: var(--c-text-2);
+
+  --color-background: var(--c-base);
+  --color-on-background: var(--c-text-1);
+
+  --color-outline: var(--c-border);
+  --color-outline-variant: var(--c-border);
+
+  --color-error: var(--c-danger);
+  --color-on-error: #ffffff;
+  --color-error-container: var(--c-danger-dim);
+  --color-on-error-container: var(--c-danger);
+
+  --color-inverse-surface: var(--c-inverse);
+  --color-inverse-on-surface: var(--c-inverse-text);
+
+  /* ── Typography Scale ──────────────────────────────────────────────── */
+  --text-display-lg: 3.5rem;
+  --text-display-lg--line-height: 1.05;
+  --text-display-md: 2.75rem;
+  --text-display-md--line-height: 1.1;
+  --text-headline-lg: 2rem;
+  --text-headline-lg--line-height: 1.15;
+  --text-headline-md: 1.5rem;
+  --text-headline-md--line-height: 1.25;
+  --text-headline-sm: 1.25rem;
+  --text-headline-sm--line-height: 1.3;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.55;
+  --text-body-md: 1rem;
+  --text-body-md--line-height: 1.55;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.5;
+  --text-label-lg: 1rem;
+  --text-label-lg--line-height: 1.4;
+  --text-label-md: 0.875rem;
+  --text-label-md--line-height: 1.4;
+  --text-label-sm: 0.75rem;
+  --text-label-sm--line-height: 1.4;
+
+  /* ── Spacing ───────────────────────────────────────────────────────── */
+  --spacing-gutter: 24px;
+  --spacing-margin-desktop: 64px;
+  --spacing-margin-mobile: 16px;
+}
+
+/* ==========================================================================
+   BASE — Reset & Global Styles
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  border-color: var(--c-border);
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--c-base);
+  color: var(--c-text-1);
+}
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: var(--c-accent);
+  color: var(--c-accent-text);
+}
+
+a {
+  color: var(--c-accent);
+}
+
+/* ==========================================================================
+   MATERIAL SYMBOLS — Icon Configuration
+   ========================================================================== */
+
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+.icon-fill {
+  font-variation-settings: "FILL" 1;
+}
+
+/* ==========================================================================
+   SCROLLBAR
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-border-strong);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-text-3);
+}
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ==========================================================================
+   ANIMATIONS
+   ========================================================================== */
+
+.page-transition {
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.node-pulse {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   INPUT STYLES
+   ========================================================================== */
+
+.input-field {
+  width: 100%;
+  background-color: var(--c-base);
+  border: 1px solid var(--c-border);
+  border-radius: 0.5rem;
+  color: var(--c-text-1);
+  font-family: var(--font-body);
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 1px var(--c-accent);
+}
+
+.input-field::placeholder {
+  color: var(--c-text-3);
+}
+
+/* Legacy compat */
+.input-industrial {
+  width: 100%;
+  background-color: var(--c-base);
+  border: 1px solid var(--c-border);
+  color: var(--c-text-1);
+  font-family: var(--font-body);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-industrial:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 1px var(--c-accent);
+}
+
+/* ==========================================================================
+   AUTH STYLES
+   ========================================================================== */
+
+.auth-input {
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-input:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 1px var(--c-accent);
+}
+
+/* Login Button Loading State */
+.login-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.login-btn.loading {
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.login-btn .spinner {
+  display: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 0.5rem;
+}
+
+.login-btn.loading .spinner {
+  display: inline-block;
+}
+
+.login-btn.loading .btn-text {
+  opacity: 0.7;
+}
+
+/* Error State */
+.login-error-msg {
+  display: none;
+  color: var(--c-danger);
+  font-family: var(--font-label);
+  font-size: var(--text-label-md);
+  margin-top: 0.5rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.login-error-msg.visible {
+  display: flex;
+}
+
+.field-error .auth-input {
+  border-color: var(--c-danger);
+  box-shadow: 0 0 0 1px var(--c-danger);
+}
+
+.shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* Success Overlay */
+.login-success-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 100;
+  animation: fadeInOverlay 0.3s ease-out;
+}
+
+.login-success-overlay.visible {
+  display: flex;
+}
+
+.login-success-overlay .success-icon {
+  font-size: 4rem;
+  color: var(--c-success);
+  margin-bottom: 1rem;
+  animation: scaleIn 0.4s ease-out 0.2s both;
+}
+
+.login-success-overlay .success-text {
+  color: #ffffff;
+  font-family: var(--font-headline);
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  animation: scaleIn 0.4s ease-out 0.4s both;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Remember Me */
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.remember-me input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--c-accent);
+  cursor: pointer;
+}
+
+.remember-me label {
+  font-family: var(--font-body);
+  font-size: var(--text-label-md);
+  color: var(--c-text-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ==========================================================================
+   NAV LINK ACTIVE PILL
+   ========================================================================== */
+
+.nav-pill {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 9999px;
+  transition: background-color 0.15s;
+  text-decoration: none;
+  color: var(--c-text-1);
+}
+
+.nav-pill:hover {
+  background-color: var(--c-elevated);
+}
+
+.nav-pill.active {
+  font-weight: 700;
+}
+
+.nav-pill.active .material-symbols-outlined {
+  font-variation-settings: "FILL" 1;
+}
