@@ -1,0 +1,49 @@
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+venv/
+.venv/
+backend/venv/
+
+# SQLite / Local Databases
+*.db
+*.sqlite3
+
+# Environment Variables
+.env
+.env.*
+
+# ==========================
+# Node
+# ==========================
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# Misc
+*.swp
+*.swo
