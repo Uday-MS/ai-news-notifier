@@ -67,9 +67,25 @@ async def test_login_nonexistent_email(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_refresh_token(db_session: AsyncSession, test_user):
+    from datetime import datetime, timezone, timedelta
+    from unittest.mock import patch
+
+    real_now = datetime.now(timezone.utc)
+
+    class MockDatetime:
+        _calls = 0
+        @classmethod
+        def now(cls, tz=None):
+            cls._calls += 1
+            if cls._calls <= 2:
+                return real_now
+            else:
+                return real_now + timedelta(minutes=1)
+
     service = _make_service(db_session)
-    tokens = await service.login(LoginRequest(email="test@example.com", password="StrongP@ss1"))
-    new_tokens = await service.refresh_token(tokens.refresh_token)
+    with patch("app.core.security.datetime", MockDatetime):
+        tokens = await service.login(LoginRequest(email="test@example.com", password="StrongP@ss1"))
+        new_tokens = await service.refresh_token(tokens.refresh_token)
     assert new_tokens.access_token
     assert new_tokens.access_token != tokens.access_token
 
