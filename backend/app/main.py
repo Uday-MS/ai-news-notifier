@@ -26,6 +26,7 @@ from app.api.collector_router import router as collector_router
 from app.api.pipeline_router import router as pipeline_router
 from app.api.feed_router import router as feed_router
 from app.api.recommendation_router import router as recommendation_router
+from app.api.notification_router import router as notification_router
 
 
 @asynccontextmanager
@@ -76,3 +77,4 @@ app.include_router(collector_router, prefix=settings.API_V1_PREFIX)
 app.include_router(pipeline_router, prefix=settings.API_V1_PREFIX)
 app.include_router(feed_router, prefix=settings.API_V1_PREFIX)
 app.include_router(recommendation_router, prefix=settings.API_V1_PREFIX)
+app.include_router(notification_router, prefix=settings.API_V1_PREFIX)
