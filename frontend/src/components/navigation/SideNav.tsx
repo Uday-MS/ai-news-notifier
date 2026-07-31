@@ -1,14 +1,38 @@
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '@/utils/constants';
 import { useAuth } from '@/store/AuthContext';
 import { cn } from '@/utils/cn';
+import { getUnread } from '@/services/notificationService';
 
 /**
- * X-inspired left sidebar navigation.
+ * X-inspired left sidebar navigation with live notification badge.
  * Full labels on xl+, icon-only on lg, hidden on smaller screens.
  */
 export function SideNav() {
   const { user, logout } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread count on mount and poll every 60s
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
+
+    async function fetchUnread() {
+      try {
+        const result = await getUnread(1, 0);
+        if (result.success && result.data) {
+          setUnreadCount(result.data.pagination.total);
+        }
+      } catch {
+        // silent — non-critical
+      }
+    }
+
+    fetchUnread();
+    timer = setInterval(fetchUnread, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <nav className="hidden lg:flex flex-col fixed left-0 top-0 h-screen z-40 border-r border-outline xl:w-[275px] lg:w-[72px] bg-surface">
@@ -28,13 +52,19 @@ export function SideNav() {
             end={item.to === '/'}
             className={({ isActive }) =>
               cn(
-                'nav-pill',
+                'nav-pill relative',
                 isActive && 'active'
               )
             }
           >
-            <span className="material-symbols-outlined text-[26px]">
+            <span className="material-symbols-outlined text-[26px] relative">
               {item.icon}
+              {/* Notification badge */}
+              {item.to === '/notifications' && unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-primary text-on-primary text-[10px] font-bold rounded-full px-1 leading-none">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </span>
             <span className="text-[1.2rem] font-body hidden xl:inline leading-none">
               {item.label}

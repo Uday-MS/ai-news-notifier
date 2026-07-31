@@ -1,7 +1,9 @@
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useAuth } from '@/store/AuthContext';
 
 export default function ProfilePage() {
-  useDocumentTitle('Profile — Platinum Mist');
+  useDocumentTitle('Profile — AI News Notifier');
+  const { user } = useAuth();
 
   const stats = [
     { label: 'Papers Read', value: '342', detail: '+12 this week', icon: 'menu_book' },
@@ -23,7 +25,7 @@ export default function ProfilePage() {
         <header className="flex justify-between items-end border-b-2 border-primary pb-4 mb-2">
           <div>
             <h2 className="font-label text-secondary uppercase tracking-widest mb-1 text-sm">Intelligence Profile</h2>
-            <h1 className="font-headline text-headline-lg text-primary uppercase">Alex Mercer</h1>
+            <h1 className="font-headline text-headline-lg text-primary uppercase">{user?.full_name || 'Agent'}</h1>
           </div>
           <div className="hidden md:flex gap-3">
             <button className="border-2 border-primary text-primary font-headline px-6 py-2 uppercase hover:bg-surface-container transition-colors bg-transparent cursor-pointer">Edit Profile</button>
