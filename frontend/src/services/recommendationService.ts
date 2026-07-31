@@ -67,7 +67,7 @@ export async function getRecommendationTrending(limit = 20) {
 
 export async function explainRecommendation(eventId: string) {
   return apiClient<RecommendationExplanation>(
-    `/recommendations/${eventId}/explain`,
+    `/recommendations/explain/${eventId}`,
   );
 }
 
@@ -77,7 +77,7 @@ export async function getRecommendationPreferences() {
 
 export async function setRecommendationPreferences(prefs: RecommendationPreferencesInput) {
   return apiClient<RecommendationPreferences>('/recommendations/preferences', {
-    method: 'PUT',
+    method: 'POST',
     body: JSON.stringify(prefs),
   });
 }

@@ -56,28 +56,54 @@ export async function apiClient<T = unknown>(
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    return { success: false, error: { code: 'NETWORK_ERROR', message: 'Network error. Please check your connection.' } };
+  }
 
   // Attempt token refresh on 401
   if (response.status === 401 && getRefreshToken()) {
     const refreshed = await tryRefreshToken();
     if (refreshed) {
       headers.set('Authorization', `Bearer ${getAccessToken()}`);
-      const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        headers,
-      });
-      return retryResponse.json();
+      try {
+        const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
+          ...options,
+          headers,
+        });
+        return await parseResponse<T>(retryResponse);
+      } catch {
+        return { success: false, error: { code: 'NETWORK_ERROR', message: 'Network error on retry.' } };
+      }
     } else {
       clearTokens();
       window.location.href = '/login';
+      return { success: false, error: { code: 'AUTH_EXPIRED', message: 'Session expired.' } };
     }
   }
 
-  return response.json();
+  return parseResponse<T>(response);
+}
+
+/** Safely parse JSON response, handling non-JSON error bodies. */
+async function parseResponse<T>(response: Response): Promise<ApiResponse<T>> {
+  try {
+    const body = await response.json();
+    return body as ApiResponse<T>;
+  } catch {
+    return {
+      success: false,
+      error: {
+        code: `HTTP_${response.status}`,
+        message: response.statusText || 'An unexpected error occurred.',
+      },
+    };
+  }
 }
 
 async function tryRefreshToken(): Promise<boolean> {

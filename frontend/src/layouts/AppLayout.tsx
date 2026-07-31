@@ -1,12 +1,31 @@
-import { Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, NavLink } from 'react-router-dom';
 import { SideNav } from '@/components/navigation/SideNav';
 import { RightSidebar } from '@/components/widgets/RightSidebar';
+import { getUnread } from '@/services/notificationService';
 
 /**
  * Three-column application layout inspired by X (Twitter).
  * Left: SideNav (fixed) | Center: Outlet (scrollable, max-width) | Right: Widgets (sticky)
  */
 export function AppLayout() {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
+    async function fetchUnread() {
+      try {
+        const result = await getUnread(1, 0);
+        if (result.success && result.data) {
+          setUnreadCount(result.data.pagination.total);
+        }
+      } catch { /* silent */ }
+    }
+    fetchUnread();
+    timer = setInterval(fetchUnread, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="flex justify-center min-h-screen bg-background text-on-background font-body">
       {/* Left Sidebar */}
@@ -23,20 +42,27 @@ export function AppLayout() {
         <RightSidebar />
       </div>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav — uses NavLink for SPA navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-outline flex justify-around items-center h-14">
-        <a href="/" className="flex flex-col items-center text-on-surface-variant text-xs gap-0.5 no-underline">
+        <NavLink to="/" end className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
           <span className="material-symbols-outlined text-xl">home</span>
-        </a>
-        <a href="/news" className="flex flex-col items-center text-on-surface-variant text-xs gap-0.5 no-underline">
+        </NavLink>
+        <NavLink to="/news" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
           <span className="material-symbols-outlined text-xl">search</span>
-        </a>
-        <a href="/notifications" className="flex flex-col items-center text-on-surface-variant text-xs gap-0.5 no-underline">
-          <span className="material-symbols-outlined text-xl">notifications</span>
-        </a>
-        <a href="/profile" className="flex flex-col items-center text-on-surface-variant text-xs gap-0.5 no-underline">
+        </NavLink>
+        <NavLink to="/notifications" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline relative ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
+          <span className="material-symbols-outlined text-xl relative">
+            notifications
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] flex items-center justify-center bg-primary text-on-primary text-[9px] font-bold rounded-full px-0.5 leading-none">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </span>
+        </NavLink>
+        <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
           <span className="material-symbols-outlined text-xl">person</span>
-        </a>
+        </NavLink>
       </nav>
     </div>
   );

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from sqlalchemy import select, update
@@ -40,7 +40,7 @@ class UserRepository:
         result = await self._db.execute(
             select(User).where(
                 User.reset_token == token,
-                User.reset_token_expires > datetime.utcnow(),
+                User.reset_token_expires > datetime.now(UTC),
             )
         )
         return result.scalar_one_or_none()
