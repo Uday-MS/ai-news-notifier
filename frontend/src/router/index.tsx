@@ -1,30 +1,47 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { AppLayout } from '@/layouts/AppLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { useAuth } from '@/store/AuthContext';
 
+/* ── Eager imports — critical path ────────────────────────────────────── */
 import HomePage from '@/pages/HomePage';
-import NewsPage from '@/pages/NewsPage';
-import OpportunitiesPage from '@/pages/OpportunitiesPage';
-import ResearchPage from '@/pages/ResearchPage';
-import GitHubPage from '@/pages/GitHubPage';
-import HackathonsPage from '@/pages/HackathonsPage';
-import SavedPage from '@/pages/SavedPage';
-import NotificationsPage from '@/pages/NotificationsPage';
-import ProfilePage from '@/pages/ProfilePage';
-import SettingsPage from '@/pages/SettingsPage';
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
-import ResetPasswordPage from '@/pages/ResetPasswordPage';
-import NotFoundPage from '@/pages/NotFoundPage';
-import OnboardingPage from '@/pages/OnboardingPage';
 
+/* ── Lazy imports — code-split secondary routes ──────────────────────── */
+const NewsPage = lazy(() => import('@/pages/NewsPage'));
+const OpportunitiesPage = lazy(() => import('@/pages/OpportunitiesPage'));
+const ResearchPage = lazy(() => import('@/pages/ResearchPage'));
+const GitHubPage = lazy(() => import('@/pages/GitHubPage'));
+const HackathonsPage = lazy(() => import('@/pages/HackathonsPage'));
+const SavedPage = lazy(() => import('@/pages/SavedPage'));
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const OnboardingPage = lazy(() => import('@/pages/OnboardingPage'));
+
+/* ── Loading fallback ─────────────────────────────────────────────────── */
 function LoadingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface">
       <span className="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
     </div>
+  );
+}
+
+function PageSuspense({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>
+      </div>
+    }>
+      {children}
+    </Suspense>
   );
 }
 
@@ -67,16 +84,16 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: '/', element: <HomePage /> },
-          { path: '/news', element: <NewsPage /> },
-          { path: '/opportunities', element: <OpportunitiesPage /> },
-          { path: '/research', element: <ResearchPage /> },
-          { path: '/github', element: <GitHubPage /> },
-          { path: '/hackathons', element: <HackathonsPage /> },
-          { path: '/saved', element: <SavedPage /> },
-          { path: '/notifications', element: <NotificationsPage /> },
-          { path: '/profile', element: <ProfilePage /> },
-          { path: '/settings', element: <SettingsPage /> },
-          { path: '*', element: <NotFoundPage /> },
+          { path: '/news', element: <PageSuspense><NewsPage /></PageSuspense> },
+          { path: '/opportunities', element: <PageSuspense><OpportunitiesPage /></PageSuspense> },
+          { path: '/research', element: <PageSuspense><ResearchPage /></PageSuspense> },
+          { path: '/github', element: <PageSuspense><GitHubPage /></PageSuspense> },
+          { path: '/hackathons', element: <PageSuspense><HackathonsPage /></PageSuspense> },
+          { path: '/saved', element: <PageSuspense><SavedPage /></PageSuspense> },
+          { path: '/notifications', element: <PageSuspense><NotificationsPage /></PageSuspense> },
+          { path: '/profile', element: <PageSuspense><ProfilePage /></PageSuspense> },
+          { path: '/settings', element: <PageSuspense><SettingsPage /></PageSuspense> },
+          { path: '*', element: <PageSuspense><NotFoundPage /></PageSuspense> },
         ],
       },
     ],
@@ -84,7 +101,7 @@ export const router = createBrowserRouter([
   {
     element: <OnboardingRoute />,
     children: [
-      { path: '/onboarding', element: <OnboardingPage /> },
+      { path: '/onboarding', element: <PageSuspense><OnboardingPage /></PageSuspense> },
     ],
   },
   {
@@ -93,10 +110,10 @@ export const router = createBrowserRouter([
       {
         element: <AuthLayout />,
         children: [
-          { path: '/login', element: <LoginPage /> },
-          { path: '/register', element: <RegisterPage /> },
-          { path: '/forgot-password', element: <ForgotPasswordPage /> },
-          { path: '/reset-password', element: <ResetPasswordPage /> },
+          { path: '/login', element: <PageSuspense><LoginPage /></PageSuspense> },
+          { path: '/register', element: <PageSuspense><RegisterPage /></PageSuspense> },
+          { path: '/forgot-password', element: <PageSuspense><ForgotPasswordPage /></PageSuspense> },
+          { path: '/reset-password', element: <PageSuspense><ResetPasswordPage /></PageSuspense> },
         ],
       },
     ],

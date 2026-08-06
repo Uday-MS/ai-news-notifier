@@ -1,9 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuth } from '@/store/AuthContext';
 
 export default function ProfilePage() {
   useDocumentTitle('Profile — AI News Notifier');
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const stats = [
     { label: 'Papers Read', value: '342', detail: '+12 this week', icon: 'menu_book' },
@@ -28,8 +30,8 @@ export default function ProfilePage() {
             <h1 className="font-headline text-headline-lg text-primary uppercase">{user?.full_name || 'Agent'}</h1>
           </div>
           <div className="hidden md:flex gap-3">
-            <button className="border-2 border-primary text-primary font-headline px-6 py-2 uppercase hover:bg-surface-container transition-colors bg-transparent cursor-pointer">Edit Profile</button>
-            <button className="bg-primary text-on-primary font-headline px-6 py-2 uppercase hover:bg-primary-container transition-colors border-none cursor-pointer">Share Intel</button>
+            <button onClick={() => navigate('/settings')} className="border-2 border-primary text-primary font-headline px-6 py-2 uppercase hover:bg-surface-container transition-colors bg-transparent cursor-pointer">Edit Profile</button>
+            <button onClick={async () => { try { if (navigator.share) { await navigator.share({ title: `${user?.full_name}'s AI Profile`, url: window.location.href }); } else { await navigator.clipboard.writeText(window.location.href); } } catch {} }} className="bg-primary text-on-primary font-headline px-6 py-2 uppercase hover:bg-primary-container transition-colors border-none cursor-pointer">Share Intel</button>
           </div>
         </header>
 
@@ -39,15 +41,15 @@ export default function ProfilePage() {
           <div className="col-span-1 md:col-span-8 bg-surface-container-lowest border-2 border-primary p-8 relative overflow-hidden flex flex-col justify-end min-h-[320px]">
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #16191e 0, #16191e 1px, transparent 1px, transparent 10px)' }} />
             <div className="relative z-10 flex flex-col md:flex-row items-end gap-6">
-              <div className="w-32 h-32 md:w-40 md:h-40 bg-surface-container border-2 border-primary overflow-hidden shrink-0">
-                <img alt="Profile" className="w-full h-full object-cover grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSlnc__5LQF8B_qprmq4YsMQ6UsMvuUhM02redY3yDHOXHT9wfUSTrV0J_mXsDuISkPX9O0PSgv4WEjLAnDXr__OMo2gMxCN0xTHDuxvccP1PzjpSbPzXXB0OPkw0DkMOr-Ww7fsbZ_ODydkKHooYkfImBThXgyt2Sk1_m2ydUxPuO1K7Ny0B6RFLJUltgfA0ofRfqQfbyJUXcn_H6quzYECQydF4FHNJ82LWZf0Sak_OyOLCj9Vx4qNTPvDnPYkvkWh--0xN8YMI" />
+              <div className="w-32 h-32 md:w-40 md:h-40 bg-primary border-2 border-primary overflow-hidden shrink-0 flex items-center justify-center">
+                <span className="font-headline text-6xl text-on-primary uppercase">{user?.full_name?.charAt(0) || 'U'}</span>
               </div>
               <div className="flex-1 pb-2">
-                <h3 className="font-headline text-headline-md text-primary leading-none uppercase mb-2">Senior AI Research Engineer</h3>
-                <p className="font-body text-body-lg text-on-surface-variant max-w-xl">Specializing in generative architectures, neural structural integrity, and brutalist optimization algorithms. Deployed 14 enterprise-scale models globally.</p>
+                <h3 className="font-headline text-headline-md text-primary leading-none uppercase mb-2">{user?.degree || 'AI Enthusiast'}</h3>
+                <p className="font-body text-body-lg text-on-surface-variant max-w-xl">{user?.bio || 'No bio set. Update your profile in Settings.'}</p>
                 <div className="flex gap-4 mt-6">
-                  <div className="flex items-center gap-2 text-sm font-label uppercase text-secondary"><span className="material-symbols-outlined text-lg">location_on</span> Neo-Tokyo / Remote</div>
-                  <div className="flex items-center gap-2 text-sm font-label uppercase text-secondary"><span className="material-symbols-outlined text-lg">business</span> Cybernetics Division</div>
+                  <div className="flex items-center gap-2 text-sm font-label uppercase text-secondary"><span className="material-symbols-outlined text-lg">location_on</span> {user?.country || 'Location not set'}</div>
+                  <div className="flex items-center gap-2 text-sm font-label uppercase text-secondary"><span className="material-symbols-outlined text-lg">business</span> {user?.college || 'Organization not set'}</div>
                 </div>
               </div>
             </div>

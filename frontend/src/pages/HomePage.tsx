@@ -68,7 +68,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Sticky Tab Header */}
-      <div className="sticky top-0 z-10 bg-surface/80 backdrop-blur-md border-b border-outline">
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline">
         <div className="flex">
           <button
             onClick={() => setActiveTab('for-you')}

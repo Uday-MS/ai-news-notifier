@@ -71,7 +71,7 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-surface/80 backdrop-blur-md border-b border-outline px-4 py-3">
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline px-4 py-3">
         <h2 className="text-xl font-bold font-body text-on-surface">Settings</h2>
       </div>
 

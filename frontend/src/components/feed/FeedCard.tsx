@@ -3,13 +3,17 @@
  * Replaces PostCard for API-driven data.
  */
 
+import { useState } from 'react';
 import type { FeedItem } from '@/services/feedService';
+import { saveArticle, unsaveArticle } from '@/services/savedService';
 
 interface FeedCardProps {
   item: FeedItem;
   showScore?: boolean;
   score?: number;
   reasons?: string[];
+  initialSaved?: boolean;
+  onUnsave?: (id: string) => void;
 }
 
 /** Format relative time from ISO string */
@@ -51,9 +55,29 @@ function scoreColor(score: number): string {
   return 'text-on-surface-variant';
 }
 
-export function FeedCard({ item, showScore, score, reasons }: FeedCardProps) {
+export function FeedCard({ item, showScore, score, reasons, initialSaved, onUnsave }: FeedCardProps) {
+  const [saved, setSaved] = useState(initialSaved ?? false);
+  const [saving, setSaving] = useState(false);
+
+  async function handleToggleSave(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (saving) return;
+    setSaving(true);
+    try {
+      if (saved) {
+        await unsaveArticle(item.id);
+        setSaved(false);
+        onUnsave?.(item.id);
+      } else {
+        await saveArticle(item.id);
+        setSaved(true);
+      }
+    } catch { /* silent */ }
+    finally { setSaving(false); }
+  }
+
   return (
-    <article className="px-4 py-4 border-b border-outline hover:bg-surface-container-low/50 transition-colors">
+    <article className="px-4 py-4 border-b border-outline hover:bg-surface-container-low/50 transition-all duration-200" role="article">
       <div className="flex gap-3">
         {/* Icon */}
         <div className="w-10 h-10 shrink-0 rounded-full bg-surface-container border border-outline flex items-center justify-center">
@@ -125,10 +149,29 @@ export function FeedCard({ item, showScore, score, reasons }: FeedCardProps) {
               {item.source}
             </span>
             <div className="ml-auto flex items-center gap-3">
-              <button className="flex items-center gap-1 p-1.5 rounded-full hover:text-primary hover:bg-primary/10 transition-colors bg-transparent border-none cursor-pointer text-inherit">
-                <span className="material-symbols-outlined text-[16px]">bookmark</span>
+              <button
+                onClick={handleToggleSave}
+                disabled={saving}
+                className={`flex items-center gap-1 p-1.5 rounded-full hover:bg-primary/10 transition-colors bg-transparent border-none cursor-pointer ${saved ? 'text-primary' : 'text-inherit hover:text-primary'}`}
+              >
+                <span className={`material-symbols-outlined text-[16px] ${saved ? 'icon-fill' : ''}`}>bookmark</span>
               </button>
-              <button className="flex items-center gap-1 p-1.5 rounded-full hover:text-primary hover:bg-primary/10 transition-colors bg-transparent border-none cursor-pointer text-inherit">
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    if (navigator.share) {
+                      await navigator.share({ title: item.cleaned_title, url: item.source_url });
+                    } else {
+                      await navigator.clipboard.writeText(item.source_url);
+                      const btn = e.currentTarget;
+                      const icon = btn.querySelector('.material-symbols-outlined');
+                      if (icon) { icon.textContent = 'check'; setTimeout(() => { icon.textContent = 'ios_share'; }, 1500); }
+                    }
+                  } catch { /* user cancelled */ }
+                }}
+                className="flex items-center gap-1 p-1.5 rounded-full hover:text-primary hover:bg-primary/10 transition-colors bg-transparent border-none cursor-pointer text-inherit"
+              >
                 <span className="material-symbols-outlined text-[16px]">ios_share</span>
               </button>
             </div>

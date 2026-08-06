@@ -29,6 +29,7 @@ from app.api.recommendation_router import router as recommendation_router
 from app.api.notification_router import router as notification_router
 from app.api.delivery_router import router as delivery_router
 from app.api.integration_router import router as integration_router
+from app.api.saved_router import router as saved_router
 
 
 @asynccontextmanager
@@ -53,6 +54,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -82,3 +84,4 @@ app.include_router(recommendation_router, prefix=settings.API_V1_PREFIX)
 app.include_router(notification_router, prefix=settings.API_V1_PREFIX)
 app.include_router(delivery_router, prefix=settings.API_V1_PREFIX)
 app.include_router(integration_router, prefix=settings.API_V1_PREFIX)
+app.include_router(saved_router, prefix=settings.API_V1_PREFIX)

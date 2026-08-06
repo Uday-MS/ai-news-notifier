@@ -32,25 +32,35 @@ export function AppLayout() {
       <SideNav />
 
       {/* Center + Right container */}
-      <div className="flex w-full xl:max-w-[1050px] lg:max-w-[650px] lg:ml-[72px] xl:ml-[275px]">
-        {/* Center Feed */}
-        <main className="flex-1 min-h-screen border-x border-outline max-w-[600px] w-full">
-          <Outlet />
+      <div className="flex w-full xl:max-w-[1100px] lg:max-w-[650px] lg:ml-[72px] xl:ml-[275px]">
+        {/* Center Feed — wider for better content readability */}
+        <main
+          className="flex-1 min-h-screen border-x border-outline w-full max-w-[700px]"
+          role="main"
+          aria-label="Main content"
+        >
+          <div className="page-transition">
+            <Outlet />
+          </div>
         </main>
 
         {/* Right Sidebar */}
         <RightSidebar />
       </div>
 
-      {/* Mobile bottom nav — uses NavLink for SPA navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-outline flex justify-around items-center h-14">
-        <NavLink to="/" end className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
-          <span className="material-symbols-outlined text-xl">home</span>
+      {/* Mobile bottom nav */}
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-t border-outline flex justify-around items-center h-14"
+        role="navigation"
+        aria-label="Mobile navigation"
+      >
+        <NavLink to="/" end className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline p-2 ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
+          <span className={`material-symbols-outlined text-xl`}>home</span>
         </NavLink>
-        <NavLink to="/news" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
+        <NavLink to="/news" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline p-2 ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
           <span className="material-symbols-outlined text-xl">search</span>
         </NavLink>
-        <NavLink to="/notifications" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline relative ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
+        <NavLink to="/notifications" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline relative p-2 ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
           <span className="material-symbols-outlined text-xl relative">
             notifications
             {unreadCount > 0 && (
@@ -60,7 +70,10 @@ export function AppLayout() {
             )}
           </span>
         </NavLink>
-        <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
+        <NavLink to="/saved" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline p-2 ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
+          <span className="material-symbols-outlined text-xl">bookmark</span>
+        </NavLink>
+        <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center text-xs gap-0.5 no-underline p-2 ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
           <span className="material-symbols-outlined text-xl">person</span>
         </NavLink>
       </nav>
