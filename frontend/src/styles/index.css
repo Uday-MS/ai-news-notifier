@@ -28,7 +28,7 @@
   --c-text-2: #536471;
   --c-text-3: #8b98a5;
 
-  /* Accent */
+  /* Accent — used sparingly for primary actions, links, selected nav */
   --c-accent: #1d9bf0;
   --c-accent-hover: #1a8cd8;
   --c-accent-text: #ffffff;
@@ -82,11 +82,11 @@
    ========================================================================== */
 
 @theme {
-  /* ── Fonts ──────────────────────────────────────────────────────────── */
-  --font-headline: "Anton", sans-serif;
-  --font-display: "Anton", sans-serif;
-  --font-body: "Inter", "Archivo Narrow", sans-serif;
-  --font-label: "Vollkorn", serif;
+  /* ── Fonts — Clean, readable system-first stack ─────────────────────── */
+  --font-headline: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-label: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* ── Material 3 Tokens → Dynamic CSS Vars ──────────────────────────── */
@@ -145,33 +145,33 @@
   --color-inverse-surface: var(--c-inverse);
   --color-inverse-on-surface: var(--c-inverse-text);
 
-  /* ── Typography Scale ──────────────────────────────────────────────── */
-  --text-display-lg: 3.5rem;
-  --text-display-lg--line-height: 1.05;
-  --text-display-md: 2.75rem;
-  --text-display-md--line-height: 1.1;
-  --text-headline-lg: 2rem;
-  --text-headline-lg--line-height: 1.15;
-  --text-headline-md: 1.5rem;
-  --text-headline-md--line-height: 1.25;
-  --text-headline-sm: 1.25rem;
-  --text-headline-sm--line-height: 1.3;
-  --text-body-lg: 1.125rem;
-  --text-body-lg--line-height: 1.55;
-  --text-body-md: 1rem;
-  --text-body-md--line-height: 1.55;
-  --text-body-sm: 0.875rem;
-  --text-body-sm--line-height: 1.5;
-  --text-label-lg: 1rem;
+  /* ── Typography Scale — Tighter, more readable ─────────────────────── */
+  --text-display-lg: 2.25rem;
+  --text-display-lg--line-height: 1.2;
+  --text-display-md: 1.875rem;
+  --text-display-md--line-height: 1.2;
+  --text-headline-lg: 1.5rem;
+  --text-headline-lg--line-height: 1.25;
+  --text-headline-md: 1.25rem;
+  --text-headline-md--line-height: 1.3;
+  --text-headline-sm: 1.125rem;
+  --text-headline-sm--line-height: 1.35;
+  --text-body-lg: 1.0625rem;
+  --text-body-lg--line-height: 1.5;
+  --text-body-md: 0.9375rem;
+  --text-body-md--line-height: 1.5;
+  --text-body-sm: 0.8125rem;
+  --text-body-sm--line-height: 1.45;
+  --text-label-lg: 0.9375rem;
   --text-label-lg--line-height: 1.4;
-  --text-label-md: 0.875rem;
+  --text-label-md: 0.8125rem;
   --text-label-md--line-height: 1.4;
-  --text-label-sm: 0.75rem;
+  --text-label-sm: 0.6875rem;
   --text-label-sm--line-height: 1.4;
 
   /* ── Spacing ───────────────────────────────────────────────────────── */
-  --spacing-gutter: 24px;
-  --spacing-margin-desktop: 64px;
+  --spacing-gutter: 20px;
+  --spacing-margin-desktop: 48px;
   --spacing-margin-mobile: 16px;
 }
 
@@ -188,6 +188,7 @@
 html {
   color-scheme: light;
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 html.dark {
@@ -204,8 +205,12 @@ body {
 
 body {
   font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
 }
 
 ::selection {
@@ -215,6 +220,11 @@ body {
 
 a {
   color: var(--c-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
 }
 
 /* ==========================================================================
@@ -237,7 +247,6 @@ a {
    ACCESSIBILITY — Focus States
    ========================================================================== */
 
-/* Remove default focus for mouse clicks, show for keyboard */
 :focus {
   outline: none;
 }
@@ -248,7 +257,6 @@ a {
   border-radius: 4px;
 }
 
-/* Skip to main content (hidden but keyboard accessible) */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -300,13 +308,13 @@ a {
    ========================================================================== */
 
 .page-transition {
-  animation: fadeSlideIn 0.2s ease-out;
+  animation: fadeSlideIn 0.15s ease-out;
 }
 
 @keyframes fadeSlideIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -320,9 +328,7 @@ a {
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes pulse-dot {
@@ -334,7 +340,6 @@ a {
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
-/* Skeleton shimmer */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -346,7 +351,6 @@ a {
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .page-transition,
   .node-pulse,
@@ -366,11 +370,12 @@ a {
   width: 100%;
   background-color: var(--c-base);
   border: 1px solid var(--c-border);
-  border-radius: 0.5rem;
+  border-radius: 4px;
   color: var(--c-text-1);
   font-family: var(--font-body);
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.75rem;
   font-size: 0.9375rem;
+  line-height: 1.5;
   transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
 }
@@ -384,7 +389,6 @@ a {
   color: var(--c-text-3);
 }
 
-/* Legacy compat */
 .input-industrial {
   width: 100%;
   background-color: var(--c-base);
@@ -413,7 +417,6 @@ a {
   box-shadow: 0 0 0 1px var(--c-accent);
 }
 
-/* Login Button Loading State */
 .login-btn {
   position: relative;
   overflow: hidden;
@@ -443,11 +446,10 @@ a {
   opacity: 0.7;
 }
 
-/* Error State */
 .login-error-msg {
   display: none;
   color: var(--c-danger);
-  font-family: var(--font-label);
+  font-family: var(--font-body);
   font-size: var(--text-label-md);
   margin-top: 0.5rem;
   align-items: center;
@@ -475,7 +477,6 @@ a {
   80% { transform: translateX(4px); }
 }
 
-/* Success Overlay */
 .login-success-overlay {
   position: fixed;
   inset: 0;
@@ -493,19 +494,19 @@ a {
 }
 
 .login-success-overlay .success-icon {
-  font-size: 4rem;
+  font-size: 3rem;
   color: var(--c-success);
   margin-bottom: 1rem;
-  animation: scaleIn 0.4s ease-out 0.2s both;
+  animation: scaleIn 0.3s ease-out 0.1s both;
 }
 
 .login-success-overlay .success-text {
   color: #ffffff;
   font-family: var(--font-headline);
-  font-size: 1.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  animation: scaleIn 0.4s ease-out 0.4s both;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  animation: scaleIn 0.3s ease-out 0.2s both;
 }
 
 @keyframes fadeInOverlay {
@@ -514,11 +515,10 @@ a {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.8); }
+  from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
 
-/* Remember Me */
 .remember-me {
   display: flex;
   align-items: center;
@@ -548,15 +548,16 @@ a {
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0.75rem;
   border-radius: 9999px;
-  transition: background-color 0.2s ease, transform 0.15s ease;
+  transition: background-color 0.15s ease;
   text-decoration: none;
   color: var(--c-text-1);
 }
 
 .nav-pill:hover {
   background-color: var(--c-elevated);
+  text-decoration: none;
 }
 
 .nav-pill:active {
@@ -572,16 +573,15 @@ a {
 }
 
 /* ==========================================================================
-   CARD — Shared interactive card hover lift
+   CARD — Shared interactive card hover
    ========================================================================== */
 
 .card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
 .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: var(--c-raised);
 }
 
 /* ==========================================================================

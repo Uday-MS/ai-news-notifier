@@ -136,7 +136,7 @@ export default function HomePage() {
           <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-4">
             {activeTab === 'for-you' ? 'auto_awesome' : 'newspaper'}
           </span>
-          <h3 className="text-lg font-headline text-on-surface mb-2">
+          <h3 className="text-lg font-bold text-on-surface mb-2">
             {activeTab === 'for-you' ? 'No recommendations yet' : 'No news yet'}
           </h3>
           <p className="text-on-surface-variant font-body text-sm max-w-xs">

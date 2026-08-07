@@ -11,9 +11,11 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.exceptions import AppException
+from app.core.logging import get_logger
 from app.core.responses import error_response
 from app.database.base import Base
-from app.database.session import engine
+from app.database.session import engine, async_session_factory
+from app.seeds.seed_sources import seed_sources
 
 # Import models so SQLAlchemy registers them
 import app.models  # noqa: F401
@@ -31,12 +33,30 @@ from app.api.delivery_router import router as delivery_router
 from app.api.integration_router import router as integration_router
 from app.api.saved_router import router as saved_router
 
+logger = get_logger("app.startup")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Application lifespan: create tables on startup."""
+    """Application lifespan: create tables and seed data on startup."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Auto-seed collector sources (idempotent)
+    try:
+        async with async_session_factory() as db:
+            result = await seed_sources(db)
+            await db.commit()
+            logger.info(
+                "Auto-seed complete",
+                extra={"context": result},
+            )
+    except Exception as exc:
+        logger.warning(
+            "Auto-seed failed (non-fatal)",
+            extra={"context": {"error": str(exc)}},
+        )
+
     yield
     await engine.dispose()
 

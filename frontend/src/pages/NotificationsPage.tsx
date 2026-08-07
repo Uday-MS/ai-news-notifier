@@ -173,7 +173,7 @@ export default function NotificationsPage() {
             <span className="material-symbols-outlined text-6xl text-on-surface-variant mb-4">
               notifications_off
             </span>
-            <h3 className="text-xl font-headline text-on-surface mb-2 uppercase">No Notifications</h3>
+            <h3 className="text-xl font-bold text-on-surface mb-2">No Notifications</h3>
             <p className="text-on-surface-variant font-body text-sm max-w-xs">
               Your notifications will appear here when there are new AI intelligence updates matching your interests.
             </p>

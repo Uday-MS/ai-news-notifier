@@ -51,14 +51,14 @@ export default function ResetPasswordPage() {
       {success ? (
         <div className="text-center">
           <span className="material-symbols-outlined text-6xl text-primary mb-4 block">lock_reset</span>
-          <h1 className="text-3xl font-headline text-on-surface mb-3">Password reset</h1>
+          <h1 className="text-3xl font-bold text-on-surface mb-3">Password reset</h1>
           <p className="text-on-surface-variant font-body mb-8">
             Your password has been updated. Redirecting to login...
           </p>
         </div>
       ) : (
         <>
-          <h1 className="text-3xl font-headline text-on-surface mb-2">Reset your password</h1>
+          <h1 className="text-3xl font-bold text-on-surface mb-2">Reset your password</h1>
           <p className="text-on-surface-variant font-body mb-6">Enter your new password below.</p>
 
           {error && (

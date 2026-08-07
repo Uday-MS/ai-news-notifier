@@ -59,17 +59,17 @@ export default function ResearchPage() {
           className="md:col-span-8 bg-surface-container-lowest border-2 border-primary rounded-lg overflow-hidden flex flex-col group relative cursor-pointer"
         >
           <div className="p-6 border-b border-primary flex justify-between items-center bg-surface-container">
-            <span className="text-label-md font-label text-primary uppercase tracking-widest font-bold">BREAKING RESEARCH // ARXIV</span>
-            <span className="text-label-md font-label text-on-surface-variant">ID: {FEATURED.id}</span>
+            <span className="text-label-md font-medium text-primary font-bold">BREAKING RESEARCH // ARXIV</span>
+            <span className="text-label-md font-medium text-on-surface-variant">ID: {FEATURED.id}</span>
           </div>
           <div className="flex-1 p-8 flex flex-col justify-center">
-            <h2 className="text-headline-lg font-headline text-primary mb-6 leading-none group-hover:text-surface-tint transition-colors">{FEATURED.title}</h2>
+            <h2 className="text-headline-lg font-bold text-primary mb-6 leading-none group-hover:text-surface-tint transition-colors">{FEATURED.title}</h2>
             <p className="text-body-lg text-on-surface-variant mb-8 max-w-2xl border-l-4 border-primary pl-4">{FEATURED.summary}</p>
             <div className="flex flex-wrap gap-3 mt-auto">
               {FEATURED.tags.map((t) => (
-                <span key={t} className="px-3 py-1 bg-surface-container-high text-on-surface-variant text-label-md font-label rounded-full border border-outline-variant">{t}</span>
+                <span key={t} className="px-3 py-1 bg-surface-container-high text-on-surface-variant text-label-md font-medium rounded-full border border-outline-variant">{t}</span>
               ))}
-              <span className="px-3 py-1 bg-primary text-on-primary text-label-md font-label rounded-full border border-primary font-bold">{FEATURED.relevance}% Relevance</span>
+              <span className="px-3 py-1 bg-primary text-on-primary text-label-md font-medium rounded-full border border-primary font-bold">{FEATURED.relevance}% Relevance</span>
             </div>
           </div>
           <div className="absolute bottom-0 right-0 w-1/3 h-full opacity-5 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #16191e 0, #16191e 2px, transparent 2px, transparent 8px)' }} />
@@ -78,7 +78,7 @@ export default function ResearchPage() {
         {/* Citation Velocity */}
         <aside className="md:col-span-4 bg-primary text-on-primary rounded-lg flex flex-col border border-primary overflow-hidden">
           <div className="p-4 border-b border-surface-tint bg-primary-container flex items-center justify-between">
-            <span className="text-label-md font-label uppercase tracking-widest font-bold text-on-primary-container">Citation Velocity</span>
+            <span className="text-label-md font-medium font-bold text-on-primary-container">Citation Velocity</span>
             <span className="material-symbols-outlined text-on-primary-container">trending_up</span>
           </div>
           <div className="p-6 flex-1 flex flex-col gap-6">
@@ -88,10 +88,10 @@ export default function ResearchPage() {
                 onClick={() => window.open(item.url, '_blank')}
                 className={`flex items-start gap-4 cursor-pointer hover:opacity-80 transition-opacity ${i < 2 ? 'pb-4 border-b border-surface-tint' : ''}`}
               >
-                <span className="text-headline-md font-headline text-surface-dim">{item.rank}</span>
+                <span className="text-headline-md font-bold text-surface-dim">{item.rank}</span>
                 <div>
                   <h4 className="text-body-lg font-bold leading-tight mb-1">{item.title}</h4>
-                  <span className="text-label-md font-label text-inverse-on-surface block mb-2">{item.src}</span>
+                  <span className="text-label-md font-medium text-inverse-on-surface block mb-2">{item.src}</span>
                   <div className="w-full bg-surface-tint h-1 mt-2"><div className="bg-on-primary h-1" style={{ width: item.w }} /></div>
                 </div>
               </div>
@@ -102,10 +102,10 @@ export default function ResearchPage() {
 
       {/* Curated Intelligence */}
       <div className="flex items-center justify-between mb-6 border-b-2 border-primary pb-2">
-        <h3 className="text-headline-md font-headline text-primary uppercase">Curated Intelligence</h3>
+        <h3 className="text-headline-md font-bold text-primary">Curated Intelligence</h3>
         <button
           onClick={() => navigate('/news?category=ai_research')}
-          className="text-label-md font-label font-bold text-primary hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer"
+          className="text-label-md font-medium font-bold text-primary hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer"
         >
           View Full Corpus <span className="material-symbols-outlined text-sm">arrow_forward</span>
         </button>
@@ -121,12 +121,12 @@ export default function ResearchPage() {
               <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-6xl text-primary/30 group-hover:scale-110 transition-transform">description</span>
               </div>
-              <div className="absolute top-4 left-4 bg-primary text-on-primary text-xs font-label uppercase px-2 py-1 font-bold">{card.cat}</div>
+              <div className="absolute top-4 left-4 bg-primary text-on-primary text-xs font-medium px-2 py-1 font-bold">{card.cat}</div>
             </div>
             <div className="p-5 flex flex-col flex-1">
               <h4 className="text-body-lg font-bold text-on-surface mb-2 leading-snug group-hover:text-primary transition-colors">{card.title}</h4>
               <p className="text-body-md text-on-surface-variant line-clamp-3 mb-4">{card.desc}</p>
-              <div className="mt-auto flex justify-between items-center text-label-md font-label text-on-surface-variant pt-4 border-t border-surface-container-high">
+              <div className="mt-auto flex justify-between items-center text-label-md font-medium text-on-surface-variant pt-4 border-t border-surface-container-high">
                 <span>Author: {card.author}</span>
                 <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">visibility</span> {card.views}</span>
               </div>

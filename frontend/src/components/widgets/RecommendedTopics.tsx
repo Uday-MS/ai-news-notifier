@@ -5,7 +5,7 @@ interface RecommendedTopicsProps {
 export function RecommendedTopics({ topics }: RecommendedTopicsProps) {
   return (
     <div className="bg-surface-container-low rounded-2xl overflow-hidden">
-      <h3 className="text-headline-sm font-headline text-on-surface px-4 pt-4 pb-3">
+      <h3 className="text-headline-sm font-bold text-on-surface px-4 pt-4 pb-3">
         Recommended Topics
       </h3>
       <div className="flex flex-wrap gap-2 px-4 pb-4">

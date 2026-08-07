@@ -35,14 +35,14 @@ export default function GitHubPage() {
     <div className="p-8 lg:p-12 max-w-7xl mx-auto w-full">
       <div className="mb-12 border-b-2 border-primary pb-6 flex justify-between items-end">
         <div>
-          <h1 className="text-6xl font-headline uppercase tracking-tight text-primary">Trending Repositories</h1>
+          <h1 className="text-6xl font-bold tracking-tight text-primary">Trending Repositories</h1>
           <p className="text-body-lg text-on-surface-variant mt-2 max-w-2xl">High-impact artificial intelligence projects gaining traction in the developer community.</p>
         </div>
         <div className="flex gap-4">
           <select
             value={langFilter}
             onChange={(e) => { setLangFilter(e.target.value); setShowAll(false); }}
-            className="bg-surface-container border border-outline rounded text-label-md font-label py-2 px-4 focus:ring-primary focus:border-primary"
+            className="bg-surface-container border border-outline rounded text-label-md font-medium py-2 px-4 focus:ring-primary focus:border-primary"
           >
             {LANGUAGES.map((l) => (
               <option key={l} value={l}>Language: {l}</option>
@@ -62,22 +62,22 @@ export default function GitHubPage() {
           </div>
           <div>
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-3xl font-headline text-primary uppercase">{FEATURED.name}</h3>
-              <div className="flex items-center gap-2 bg-surface-container-high px-3 py-1 rounded-full text-label-md font-label">
+              <h3 className="text-3xl font-bold text-primary">{FEATURED.name}</h3>
+              <div className="flex items-center gap-2 bg-surface-container-high px-3 py-1 rounded-full text-label-md font-medium">
                 <span className="material-symbols-outlined text-sm">star</span><span>{FEATURED.stars}</span>
               </div>
             </div>
             <p className="text-body-lg text-on-surface-variant mb-6 relative z-10 w-4/5">{FEATURED.desc}</p>
             <div className="flex gap-2 mb-6">
-              {FEATURED.tags.map((t) => <span key={t} className="bg-surface-container px-3 py-1 rounded text-label-md font-label border border-outline-variant">{t}</span>)}
+              {FEATURED.tags.map((t) => <span key={t} className="bg-surface-container px-3 py-1 rounded text-label-md font-medium border border-outline-variant">{t}</span>)}
             </div>
           </div>
           <div className="flex justify-between items-center border-t border-outline-variant pt-4 relative z-10">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm">M</div>
-              <span className="text-label-md font-label font-semibold">Built by Mistral AI</span>
+              <span className="text-label-md font-medium font-semibold">Built by Mistral AI</span>
             </div>
-            <span className="flex items-center gap-2 text-primary font-bold font-label">
+            <span className="flex items-center gap-2 text-primary font-bold font-medium">
               View Repository <span className="material-symbols-outlined">arrow_forward</span>
             </span>
           </div>
@@ -86,18 +86,18 @@ export default function GitHubPage() {
         {/* Analysis */}
         <div className="border border-primary bg-primary text-on-primary p-6 rounded-lg flex flex-col justify-between">
           <div>
-            <h4 className="text-xl font-headline uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined">troubleshoot</span> Trend Analysis
             </h4>
             <p className="text-body-md text-on-primary-container mb-4">Our AI indicates a 45% surge in fork activity on local-LLM repositories over the past 72 hours, correlating with new edge-compute hardware announcements.</p>
             <div className="space-y-3">
               <div className="bg-primary-container p-3 rounded border border-outline-variant/30">
-                <div className="text-label-md font-label text-on-primary-container mb-1">Momentum Score</div>
-                <div className="flex items-end gap-2"><span className="text-2xl font-headline">94.2</span><span className="text-label-md text-tertiary-fixed-dim">/ 100</span></div>
+                <div className="text-label-md font-medium text-on-primary-container mb-1">Momentum Score</div>
+                <div className="flex items-end gap-2"><span className="text-2xl font-bold">94.2</span><span className="text-label-md text-tertiary-fixed-dim">/ 100</span></div>
               </div>
               <div className="bg-primary-container p-3 rounded border border-outline-variant/30">
-                <div className="text-label-md font-label text-on-primary-container mb-1">Dominant Language</div>
-                <div className="text-xl font-headline">RUST <span className="text-sm font-body text-on-primary-container">+12%</span></div>
+                <div className="text-label-md font-medium text-on-primary-container mb-1">Dominant Language</div>
+                <div className="text-xl font-bold">RUST <span className="text-sm font-body text-on-primary-container">+12%</span></div>
               </div>
             </div>
           </div>
@@ -110,11 +110,11 @@ export default function GitHubPage() {
             onClick={() => window.open(r.url, '_blank')}
             className="border border-outline bg-surface p-6 rounded-lg hover:border-primary transition-colors flex flex-col cursor-pointer group"
           >
-            <h3 className="text-xl font-headline text-primary uppercase mb-2 truncate group-hover:underline">{r.name}</h3>
+            <h3 className="text-xl font-bold text-primary mb-2 truncate group-hover:underline">{r.name}</h3>
             <p className="text-body-md text-on-surface-variant flex-grow mb-4">{r.desc}</p>
             <div className="flex justify-between items-center mt-auto">
-              <span className="text-label-md font-label text-secondary flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-secondary inline-block" /> {r.lang}</span>
-              <div className="flex items-center gap-1 text-label-md font-label"><span className="material-symbols-outlined text-sm">star</span> {r.stars}</div>
+              <span className="text-label-md font-medium text-secondary flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-secondary inline-block" /> {r.lang}</span>
+              <div className="flex items-center gap-1 text-label-md font-medium"><span className="material-symbols-outlined text-sm">star</span> {r.stars}</div>
             </div>
           </div>
         ))}
@@ -125,7 +125,7 @@ export default function GitHubPage() {
         <div className="mt-12 text-center">
           <button
             onClick={() => setShowAll(true)}
-            className="border-2 border-primary text-primary font-headline uppercase px-8 py-3 rounded hover:bg-primary hover:text-on-primary transition-colors tracking-widest inline-flex items-center gap-2 bg-transparent cursor-pointer"
+            className="border-2 border-primary text-primary font-bold px-8 py-3 rounded hover:bg-primary hover:text-on-primary transition-colors inline-flex items-center gap-2 bg-transparent cursor-pointer"
           >
             Load More Data <span className="material-symbols-outlined">expand_more</span>
           </button>

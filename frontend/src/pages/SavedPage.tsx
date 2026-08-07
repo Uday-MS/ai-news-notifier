@@ -95,7 +95,7 @@ export default function SavedPage() {
       {!loading && items.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center flex-1 py-20 text-center">
           <span className="material-symbols-outlined text-6xl text-on-surface-variant mb-4">bookmark</span>
-          <h3 className="text-xl font-headline text-on-surface mb-2 uppercase">No Saved Articles</h3>
+          <h3 className="text-xl font-bold text-on-surface mb-2">No Saved Articles</h3>
           <p className="text-on-surface-variant font-body text-sm max-w-sm">
             Bookmark articles from the feed to save them here for later reading. Click the bookmark icon on any article to get started.
           </p>
@@ -120,7 +120,7 @@ export default function SavedPage() {
           {hasMore && (
             <button
               onClick={handleLoadMore}
-              className="w-full py-4 text-center text-primary font-label uppercase tracking-wider text-sm hover:bg-surface-container transition-colors bg-transparent border-none border-t border-outline cursor-pointer"
+              className="w-full py-4 text-center text-primary font-medium text-sm hover:bg-surface-container transition-colors bg-transparent border-none border-t border-outline cursor-pointer"
             >
               Load more
             </button>

@@ -48,7 +48,7 @@ export default function RegisterPage() {
         </Link>
       </div>
 
-      <h1 className="text-3xl font-headline text-on-surface mb-2">Create your account</h1>
+      <h1 className="text-3xl font-bold text-on-surface mb-2">Create your account</h1>
       <p className="text-on-surface-variant font-body mb-6">Join the AI intelligence network.</p>
 
       {/* Error */}

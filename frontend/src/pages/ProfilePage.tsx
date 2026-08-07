@@ -7,102 +7,68 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const stats = [
-    { label: 'Papers Read', value: '342', detail: '+12 this week', icon: 'menu_book' },
-    { label: 'Models Trained', value: '87', detail: '99.4% avg success rate', icon: 'model_training' },
-    { label: 'Apps Deployed', value: '14', detail: 'Zero downtime', icon: 'dns' },
-    { label: 'Global Rank', value: 'Top 2%', detail: 'In architectural design', icon: 'emoji_events' },
-  ];
-
-  const operations = [
-    { icon: 'commit', bgClass: 'bg-primary text-on-primary', title: 'Optimized Transformer Topology', time: '2 hours ago', desc: 'Reduced inference latency by 14% through structural pruning and quantization strategies in the core neural engine.' },
-    { icon: 'description', bgClass: 'bg-surface-container text-primary border border-outline', title: 'Published: Brutalist AI Architectures', time: 'Yesterday', desc: 'Internal research paper detailing a methodology for removing unnecessary complexity in model scaling.' },
-    { icon: 'terminal', bgClass: 'bg-surface-container text-primary border border-outline', title: 'System Override: Node Alpha-7', time: 'Oct 12, 2023', desc: 'Emergency manual recalibration of distributed training cluster to prevent thermal throttling.' },
-  ];
+  const joinDate = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : 'Member';
 
   return (
-    <div className="p-4 md:p-[64px] overflow-y-auto">
-      <div className="max-w-7xl mx-auto flex flex-col gap-6">
-        {/* Header */}
-        <header className="flex justify-between items-end border-b-2 border-primary pb-4 mb-2">
-          <div>
-            <h2 className="font-label text-secondary uppercase tracking-widest mb-1 text-sm">Intelligence Profile</h2>
-            <h1 className="font-headline text-headline-lg text-primary uppercase">{user?.full_name || 'Agent'}</h1>
-          </div>
-          <div className="hidden md:flex gap-3">
-            <button onClick={() => navigate('/settings')} className="border-2 border-primary text-primary font-headline px-6 py-2 uppercase hover:bg-surface-container transition-colors bg-transparent cursor-pointer">Edit Profile</button>
-            <button onClick={async () => { try { if (navigator.share) { await navigator.share({ title: `${user?.full_name}'s AI Profile`, url: window.location.href }); } else { await navigator.clipboard.writeText(window.location.href); } } catch {} }} className="bg-primary text-on-primary font-headline px-6 py-2 uppercase hover:bg-primary-container transition-colors border-none cursor-pointer">Share Intel</button>
-          </div>
-        </header>
+    <div className="flex flex-col min-h-screen">
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline px-4 py-2.5">
+        <h2 className="text-xl font-bold text-on-surface">{user?.full_name || 'Profile'}</h2>
+      </div>
 
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Hero */}
-          <div className="col-span-1 md:col-span-8 bg-surface-container-lowest border-2 border-primary p-8 relative overflow-hidden flex flex-col justify-end min-h-[320px]">
-            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #16191e 0, #16191e 1px, transparent 1px, transparent 10px)' }} />
-            <div className="relative z-10 flex flex-col md:flex-row items-end gap-6">
-              <div className="w-32 h-32 md:w-40 md:h-40 bg-primary border-2 border-primary overflow-hidden shrink-0 flex items-center justify-center">
-                <span className="font-headline text-6xl text-on-primary uppercase">{user?.full_name?.charAt(0) || 'U'}</span>
-              </div>
-              <div className="flex-1 pb-2">
-                <h3 className="font-headline text-headline-md text-primary leading-none uppercase mb-2">{user?.degree || 'AI Enthusiast'}</h3>
-                <p className="font-body text-body-lg text-on-surface-variant max-w-xl">{user?.bio || 'No bio set. Update your profile in Settings.'}</p>
-                <div className="flex gap-4 mt-6">
-                  <div className="flex items-center gap-2 text-sm font-label uppercase text-secondary"><span className="material-symbols-outlined text-lg">location_on</span> {user?.country || 'Location not set'}</div>
-                  <div className="flex items-center gap-2 text-sm font-label uppercase text-secondary"><span className="material-symbols-outlined text-lg">business</span> {user?.college || 'Organization not set'}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Cover */}
+      <div className="h-[200px] bg-gradient-to-br from-[var(--c-elevated)] to-[var(--c-overlay)]" />
 
-          {/* Security Card */}
-          <div className="col-span-1 md:col-span-4 bg-primary text-on-primary border-2 border-primary p-8 flex flex-col justify-between">
-            <div className="font-label uppercase tracking-widest text-inverse-primary text-sm border-b border-surface-tint pb-2 mb-4">Security Clearance</div>
-            <div><div className="font-headline text-6xl leading-none mb-2">Lvl 08</div><p className="font-body text-body-md text-inverse-primary">Authorized for critical system overrides and experimental core access.</p></div>
-            <div className="mt-8 pt-4 border-t border-surface-tint flex justify-between items-center">
-              <span className="font-label text-xs uppercase text-inverse-primary">Status</span>
-              <span className="flex items-center gap-2 font-headline text-sm tracking-wider"><div className="w-2 h-2 rounded-full bg-surface-container-lowest animate-pulse" /> ACTIVE / ONLINE</span>
-            </div>
-          </div>
-
-          {/* Stats */}
-          {stats.map((s) => (
-            <div key={s.label} className="col-span-1 md:col-span-3 bg-surface-container-lowest border border-outline p-6 hover:border-primary transition-colors group cursor-default">
-              <div className="font-label text-secondary uppercase text-xs mb-4 flex justify-between items-center">{s.label}<span className="material-symbols-outlined text-lg text-outline-variant group-hover:text-primary transition-colors">{s.icon}</span></div>
-              <div className="font-headline text-headline-md text-primary">{s.value}</div>
-              <div className="font-body text-sm text-on-surface-variant mt-2">{s.detail}</div>
-            </div>
-          ))}
-
-          {/* Core Stack */}
-          <div className="col-span-1 md:col-span-4 bg-surface-container-lowest border-2 border-outline-variant p-6 flex flex-col">
-            <h3 className="font-headline text-xl uppercase text-primary border-b-2 border-primary pb-2 mb-6">Core Stack</h3>
-            <div className="flex-1 space-y-4">
-              {[{ label: 'Frameworks', items: ['PyTorch', 'TensorFlow', 'JAX'] }, { label: 'Languages', items: ['Python', 'Rust', 'C++'] }, { label: 'Infrastructure', items: ['Kubernetes', 'Docker', 'AWS Sagemaker'] }].map((g) => (
-                <div key={g.label}><div className="font-label text-xs uppercase text-secondary mb-2">{g.label}</div><div className="flex flex-wrap gap-2">{g.items.map((i) => <span key={i} className="bg-surface-container px-3 py-1 text-sm font-body text-on-surface border border-outline-variant">{i}</span>)}</div></div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Operations */}
-          <div className="col-span-1 md:col-span-8 bg-surface-container-lowest border-2 border-outline-variant p-6">
-            <div className="flex justify-between items-end border-b-2 border-primary pb-2 mb-6">
-              <h3 className="font-headline text-xl uppercase text-primary">Recent Operations</h3>
-              <a className="font-label text-sm uppercase text-secondary hover:text-primary transition-colors flex items-center gap-1" href="#">View Log <span className="material-symbols-outlined text-sm">arrow_forward</span></a>
-            </div>
-            <div className="flex flex-col gap-4">
-              {operations.map((op) => (
-                <div key={op.title} className="group flex gap-4 p-4 border border-transparent hover:border-outline-variant hover:bg-surface-container-low transition-all">
-                  <div className={`w-12 h-12 flex items-center justify-center shrink-0 ${op.bgClass}`}><span className="material-symbols-outlined">{op.icon}</span></div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-1"><h4 className="font-headline text-lg uppercase text-primary">{op.title}</h4><span className="font-label text-xs text-secondary">{op.time}</span></div>
-                    <p className="font-body text-on-surface-variant text-sm">{op.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Avatar + Edit */}
+      <div className="px-4 -mt-[66px] flex justify-between items-end mb-3">
+        <div className="w-[132px] h-[132px] rounded-full bg-surface border-4 border-surface flex items-center justify-center">
+          <div className="w-[124px] h-[124px] rounded-full bg-[var(--c-elevated)] flex items-center justify-center">
+            <span className="text-5xl font-bold text-on-surface-variant">{user?.full_name?.charAt(0)?.toUpperCase() || 'U'}</span>
           </div>
         </div>
+        <button onClick={() => navigate('/settings')}
+          className="px-4 py-1.5 rounded-full border border-[var(--c-border-strong)] text-on-surface font-semibold text-[15px] hover:bg-[var(--c-elevated)] transition-colors bg-transparent cursor-pointer">
+          Edit profile
+        </button>
+      </div>
+
+      {/* Info */}
+      <div className="px-4 pb-3 border-b border-outline">
+        <h1 className="text-xl font-bold text-on-surface leading-tight">{user?.full_name || 'User'}</h1>
+        {user?.username && <p className="text-[15px] text-on-surface-variant">@{user.username}</p>}
+
+        {user?.bio ? (
+          <p className="text-[15px] text-on-surface leading-[1.4] mt-3">{user.bio}</p>
+        ) : (
+          <p className="text-[15px] text-on-surface-variant mt-3">No bio yet. <button onClick={() => navigate('/settings')} className="text-primary hover:underline bg-transparent border-none cursor-pointer text-[15px] p-0">Add one</button></p>
+        )}
+
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[15px] text-on-surface-variant">
+          {user?.college && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">business</span>{user.college}</span>}
+          {user?.country && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">location_on</span>{user.country}</span>}
+          {user?.degree && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">school</span>{user.degree}</span>}
+          <span className="flex items-center gap-1"><span className="material-symbols-outlined text-base">calendar_month</span>Joined {joinDate}</span>
+        </div>
+
+
+      </div>
+
+      <div className="px-4 py-4">
+        <h3 className="text-[15px] font-semibold text-on-surface mb-3">Activity</h3>
+        {[
+          { icon: 'menu_book', text: 'Reading AI research papers', detail: 'Personalized feed active' },
+          { icon: 'bookmark', text: 'Saving articles for later', detail: 'Visit Saved to review' },
+          { icon: 'notifications', text: 'Receiving AI news alerts', detail: 'Based on your interests' },
+        ].map((a) => (
+          <div key={a.icon} className="flex items-start gap-3 py-2">
+            <span className="material-symbols-outlined text-on-surface-variant text-xl mt-0.5">{a.icon}</span>
+            <div>
+              <p className="text-[15px] text-on-surface">{a.text}</p>
+              <p className="text-[13px] text-on-surface-variant">{a.detail}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

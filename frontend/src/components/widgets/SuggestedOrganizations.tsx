@@ -12,7 +12,7 @@ interface SuggestedOrganizationsProps {
 export function SuggestedOrganizations({ organizations }: SuggestedOrganizationsProps) {
   return (
     <div className="bg-surface-container-low rounded-2xl overflow-hidden">
-      <h3 className="text-headline-sm font-headline text-on-surface px-4 pt-4 pb-3">
+      <h3 className="text-headline-sm font-bold text-on-surface px-4 pt-4 pb-3">
         Who to follow
       </h3>
       <div className="flex flex-col">

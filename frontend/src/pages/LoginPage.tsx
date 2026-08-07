@@ -50,7 +50,7 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <h1 className="text-3xl font-headline text-on-surface mb-8">Sign in to AI News</h1>
+        <h1 className="text-3xl font-bold text-on-surface mb-8">Sign in to AI News</h1>
 
         {/* Social Auth */}
         <div className="flex flex-col gap-3 mb-4">

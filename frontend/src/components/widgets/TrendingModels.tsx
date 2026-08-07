@@ -7,7 +7,7 @@ interface TrendingModelsProps {
 export function TrendingModels({ models }: TrendingModelsProps) {
   return (
     <div className="bg-surface-container-low rounded-2xl overflow-hidden">
-      <h3 className="text-headline-sm font-headline text-on-surface px-4 pt-4 pb-3">
+      <h3 className="text-headline-sm font-bold text-on-surface px-4 pt-4 pb-3">
         Trending Models
       </h3>
       <ul className="flex flex-col list-none p-0 m-0">

@@ -112,7 +112,7 @@ export default function OnboardingPage() {
     return (
       <div className="text-center py-8 page-transition">
         <span className="material-symbols-outlined text-primary text-7xl mb-6 block icon-fill">hub</span>
-        <h1 className="text-3xl font-headline text-on-surface mb-3">
+        <h1 className="text-3xl font-bold text-on-surface mb-3">
           Welcome, {user?.full_name?.split(' ')[0] ?? 'there'}!
         </h1>
         <p className="text-on-surface-variant font-body text-lg mb-2 max-w-md mx-auto">
@@ -126,7 +126,7 @@ export default function OnboardingPage() {
   function renderProfile() {
     return (
       <div className="page-transition">
-        <h2 className="text-2xl font-headline text-on-surface mb-2">Your Profile</h2>
+        <h2 className="text-2xl font-bold text-on-surface mb-2">Your Profile</h2>
         <p className="text-on-surface-variant font-body mb-6">Tell us about yourself. All fields are optional.</p>
         <div className="flex flex-col gap-4">
           <div>
@@ -165,7 +165,7 @@ export default function OnboardingPage() {
   function renderInterests() {
     return (
       <div className="page-transition">
-        <h2 className="text-2xl font-headline text-on-surface mb-2">What are you interested in?</h2>
+        <h2 className="text-2xl font-bold text-on-surface mb-2">What are you interested in?</h2>
         <p className="text-on-surface-variant font-body mb-6">
           Select topics to personalize your feed. Choose at least 3.
         </p>
@@ -202,7 +202,7 @@ export default function OnboardingPage() {
   function renderPreferences() {
     return (
       <div className="page-transition">
-        <h2 className="text-2xl font-headline text-on-surface mb-2">Opportunity Preferences</h2>
+        <h2 className="text-2xl font-bold text-on-surface mb-2">Opportunity Preferences</h2>
         <p className="text-on-surface-variant font-body mb-6">What types of opportunities interest you?</p>
         <div className="flex flex-wrap gap-3 mb-8">
           {OPPORTUNITY_OPTIONS.map((opp) => {
@@ -226,7 +226,7 @@ export default function OnboardingPage() {
           })}
         </div>
 
-        <h3 className="text-lg font-headline text-on-surface mb-2">Notification Frequency</h3>
+        <h3 className="text-lg font-bold text-on-surface mb-2">Notification Frequency</h3>
         <p className="text-on-surface-variant font-body text-sm mb-4">How often should we notify you?</p>
         <div className="flex flex-col gap-3">
           {NOTIFICATION_OPTIONS.map((opt) => (
@@ -264,7 +264,7 @@ export default function OnboardingPage() {
         <span className="material-symbols-outlined text-primary text-7xl mb-6 block icon-fill">
           rocket_launch
         </span>
-        <h2 className="text-3xl font-headline text-on-surface mb-3">You're all set!</h2>
+        <h2 className="text-3xl font-bold text-on-surface mb-3">You're all set!</h2>
         <p className="text-on-surface-variant font-body text-lg mb-8 max-w-md mx-auto">
           Your intelligence feed is personalized. Let's explore what's happening in AI.
         </p>
