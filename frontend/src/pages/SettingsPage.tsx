@@ -198,18 +198,18 @@ export default function SettingsPage() {
                 <p className="font-body font-medium text-sm text-on-surface">Password</p>
                 <p className="font-body text-sm text-on-surface-variant">Change your account password</p>
               </div>
-              <button className="px-4 py-2 rounded-full border border-outline text-on-surface font-body font-bold text-sm hover:bg-surface-container transition-colors bg-transparent cursor-pointer">
-                Update
-              </button>
+              <span className="px-4 py-2 rounded-full border border-outline text-on-surface-variant font-body text-sm opacity-50">
+                Coming soon
+              </span>
             </div>
             <div className="flex justify-between items-center py-2 border-t border-outline">
               <div>
                 <p className="font-body font-medium text-sm text-on-surface">Two-Factor Authentication</p>
-                <p className="font-body text-sm text-on-surface-variant">Not enabled</p>
+                <p className="font-body text-sm text-on-surface-variant">Not yet available</p>
               </div>
-              <button className="px-4 py-2 rounded-full bg-primary text-on-primary font-body font-bold text-sm hover:opacity-90 transition-opacity border-none cursor-pointer">
-                Enable
-              </button>
+              <span className="px-4 py-2 rounded-full border border-outline text-on-surface-variant font-body text-sm opacity-50">
+                Coming soon
+              </span>
             </div>
           </div>
         </section>

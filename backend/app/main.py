@@ -38,7 +38,7 @@ logger = get_logger("app.startup")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Application lifespan: create tables and seed data on startup."""
+    """Application lifespan: create tables, seed data, and start background pipeline."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -57,8 +57,75 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             extra={"context": {"error": str(exc)}},
         )
 
+    # Start background pipeline
+    import asyncio
+    pipeline_task = asyncio.create_task(_background_pipeline_loop())
+
     yield
+
+    pipeline_task.cancel()
     await engine.dispose()
+
+
+async def _background_pipeline_loop() -> None:
+    """Run collect → process → notify every 30 minutes in the background."""
+    import asyncio
+    from app.services.collector_service import CollectorService
+    from app.services.pipeline.pipeline_service import PipelineService
+    from app.services.notification_service import NotificationService
+    from app.models.user import User
+    from sqlalchemy import select
+
+    INTERVAL = 30 * 60  # 30 minutes
+
+    # Wait 10s after startup before first run to let the server fully start
+    await asyncio.sleep(10)
+
+    while True:
+        logger.info("Background pipeline: starting cycle")
+        try:
+            async with async_session_factory() as db:
+                # Step 1: Collect
+                collector_svc = CollectorService(db)
+                results = await collector_svc.run_all_active()
+                await db.commit()
+                total_emitted = sum(r.get("emitted", 0) for r in results)
+                total_errors = sum(r.get("errors", 0) for r in results)
+
+            async with async_session_factory() as db:
+                # Step 2: Process
+                pipeline_svc = PipelineService(db)
+                proc_result = await pipeline_svc.process_all_unprocessed()
+                await db.commit()
+
+            async with async_session_factory() as db:
+                # Step 3: Notify
+                stmt = select(User).where(User.onboarding_completed == True)  # noqa: E712
+                user_result = await db.execute(stmt)
+                users = list(user_result.scalars().all())
+                notif_svc = NotificationService(db)
+                total_notifs = 0
+                for user in users:
+                    gen = await notif_svc.generate_for_user(user, min_score=20.0, max_count=10)
+                    total_notifs += gen.generated
+                await db.commit()
+
+            logger.info(
+                "Background pipeline: cycle complete",
+                extra={"context": {
+                    "collected": total_emitted,
+                    "collect_errors": total_errors,
+                    "processed": proc_result.get("processed", 0),
+                    "notifications": total_notifs,
+                }},
+            )
+        except Exception as exc:
+            logger.error(
+                "Background pipeline: cycle failed",
+                exc_info=exc,
+            )
+
+        await asyncio.sleep(INTERVAL)
 
 
 app = FastAPI(

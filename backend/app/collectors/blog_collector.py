@@ -30,7 +30,8 @@ class BlogCollector(BaseCollector):
     async def fetch(self, source: CollectorSource) -> list[RawItem]:
         """Download and parse the blog feed."""
         async with httpx.AsyncClient(
-            timeout=settings.COLLECTOR_REQUEST_TIMEOUT
+            timeout=settings.COLLECTOR_REQUEST_TIMEOUT,
+            follow_redirects=True,
         ) as client:
             response = await client.get(source.url)
             response.raise_for_status()
@@ -45,6 +46,9 @@ class BlogCollector(BaseCollector):
                 content = entry["content"][0].get("value", "")
             if not content:
                 content = entry.get("summary", entry.get("description", ""))
+            # Fallback: use title when no summary/content is available
+            if not content.strip():
+                content = entry.get("title", "No description available.")
 
             items.append(
                 RawItem(

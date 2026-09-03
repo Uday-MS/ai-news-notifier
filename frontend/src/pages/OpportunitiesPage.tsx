@@ -1,186 +1,183 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { FeedCard } from '@/components/feed/FeedCard';
+import { searchFeed, type FeedItem, type SearchParams } from '@/services/feedService';
 import { cn } from '@/utils/cn';
 
-type Filter = 'all' | 'internship' | 'grant';
+type Filter = 'all' | 'funding' | 'competition' | 'startup' | 'internship';
 
-const OPPORTUNITIES = [
-  {
-    type: 'fellowship' as const,
-    filterType: 'grant' as Filter,
-    featured: true,
-    badge: 'Research Fellowship',
-    closes: 'Closes in 5 Days',
-    title: 'DeepMind AI Alignment Scholar',
-    desc: 'A fully funded 12-month fellowship focusing on scalable oversight and mechanistic interpretability. Open to PhD candidates and exceptional independent researchers.',
-    match: 98,
-    cta: 'Review & Apply',
-    url: 'https://deepmind.google/about/careers/',
-    deadline: 'Oct 15',
-  },
-  {
-    type: 'internship' as const,
-    filterType: 'internship' as Filter,
-    featured: false,
-    badge: 'Industry Internship',
-    title: 'OpenAI ML Engineering Intern',
-    desc: 'Summer 2024 cohort. Focus on large-scale distributed training infrastructure.',
-    match: 85,
-    cta: 'Apply',
-    url: 'https://openai.com/careers/',
-    deadline: 'Oct 15',
-  },
-  {
-    type: 'grant' as const,
-    filterType: 'grant' as Filter,
-    featured: false,
-    badge: 'Seed Grant',
-    title: 'Y Combinator AI Track',
-    desc: '$500k standard deal for early-stage applied AI startups. Winter batch applications open.',
-    match: 92,
-    cta: 'Draft App',
-    url: 'https://www.ycombinator.com/apply',
-    deadline: 'Nov 1',
-    dark: true,
-  },
-  {
-    type: 'grant' as const,
-    filterType: 'grant' as Filter,
-    featured: false,
-    badge: 'Academic Grant',
-    title: 'NSF AI Institute Funding',
-    desc: 'Collaborative research grants for trustworthy AI systems in critical infrastructure.',
-    match: 78,
-    cta: 'View',
-    url: 'https://new.nsf.gov/funding/opportunities',
-    deadline: 'Dec 12',
-  },
-];
+const OPPORTUNITY_CATEGORIES = ['funding', 'competition', 'startup', 'internship'];
 
-const FILTERS: { value: Filter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'internship', label: 'Internships' },
-  { value: 'grant', label: 'Grants' },
+const FILTERS: { value: Filter; label: string; icon: string }[] = [
+  { value: 'all', label: 'All', icon: 'dashboard' },
+  { value: 'funding', label: 'Funding', icon: 'payments' },
+  { value: 'competition', label: 'Competitions', icon: 'trophy' },
+  { value: 'startup', label: 'Startups', icon: 'storefront' },
+  { value: 'internship', label: 'Internships', icon: 'school' },
 ];
 
 export default function OpportunitiesPage() {
   useDocumentTitle('Opportunities — AI News Notifier');
   const [filter, setFilter] = useState<Filter>('all');
-  const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
+  const [items, setItems] = useState<FeedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const filtered = filter === 'all' ? OPPORTUNITIES : OPPORTUNITIES.filter((o) => o.filterType === filter);
-  const featuredOpp = filtered.find((o) => o.featured);
-  const others = filtered.filter((o) => !o.featured);
+  const loadOpportunities = useCallback(async (params: SearchParams = {}, append = false) => {
+    if (!append) setLoading(true);
+    setError('');
+    try {
+      // When "all" is selected, we search across all opportunity categories
+      // The backend search supports a single category filter, so for "all" we omit category
+      // and rely on the fact that these categories exist in the data
+      const searchParams: SearchParams = {
+        sort: 'highest_importance',
+        limit: 20,
+        ...params,
+      };
 
-  function toggleBookmark(title: string) {
-    setBookmarked((prev) => {
-      const next = new Set(prev);
-      if (next.has(title)) next.delete(title);
-      else next.add(title);
-      return next;
-    });
+      if (params.category) {
+        // Specific category selected
+        const result = await searchFeed(searchParams);
+        if (result.success && result.data) {
+          setItems((prev) => append ? [...prev, ...result.data!.items] : result.data!.items);
+          setHasMore(result.data.pagination.has_more);
+          setTotalCount(result.data.pagination.total);
+        }
+      } else {
+        // "All" — load from all opportunity categories
+        const results = await Promise.all(
+          OPPORTUNITY_CATEGORIES.map((cat) =>
+            searchFeed({ ...searchParams, category: cat, limit: 10 })
+          )
+        );
+        const allItems: FeedItem[] = [];
+        let total = 0;
+        for (const r of results) {
+          if (r.success && r.data) {
+            allItems.push(...r.data.items);
+            total += r.data.pagination.total;
+          }
+        }
+        // Sort by importance
+        allItems.sort((a, b) => b.importance_score - a.importance_score);
+        setItems(append ? (prev) => [...prev, ...allItems] : allItems);
+        setHasMore(total > allItems.length);
+        setTotalCount(total);
+      }
+    } catch {
+      setError('Failed to load opportunities.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOpportunities(filter === 'all' ? {} : { category: filter });
+  }, [filter, loadOpportunities]);
+
+  function handleFilterChange(f: Filter) {
+    setFilter(f);
   }
 
   return (
-    <div className="p-6 md:p-12 lg:p-[64px] max-w-7xl mx-auto">
-      <header className="mb-12 border-b-4 border-primary pb-6 flex justify-between items-end">
-        <div>
-          <h2 className="text-headline-lg font-bold text-primary">Active Opportunities</h2>
-          <p className="text-body-lg text-on-surface-variant mt-2 max-w-2xl">Curated AI internships, fellowships, and research grants prioritized by your interest profile.</p>
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline">
+        <div className="px-4 py-2.5">
+          <h2 className="text-xl font-bold text-on-surface">Opportunities</h2>
+          <p className="text-[13px] text-on-surface-variant mt-0.5">Funding, competitions, internships, and startups in AI</p>
         </div>
-        <div className="hidden sm:flex gap-2">
+
+        {/* Filter tabs */}
+        <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
           {FILTERS.map((f) => (
             <button
               key={f.value}
-              onClick={() => setFilter(f.value)}
+              onClick={() => handleFilterChange(f.value)}
               className={cn(
-                'px-3 py-1 text-label-md font-medium rounded-sm border cursor-pointer transition-colors',
+                'px-3 py-1.5 text-[13px] rounded-full border whitespace-nowrap transition-colors cursor-pointer shrink-0 flex items-center gap-1.5',
                 filter === f.value
-                  ? 'bg-surface-container-high border-primary text-primary font-bold'
-                  : 'bg-surface border-outline text-on-surface hover:bg-surface-container'
+                  ? 'bg-on-surface text-surface border-on-surface font-semibold'
+                  : 'bg-transparent text-on-surface border-[var(--c-border-strong)] hover:bg-[var(--c-elevated)]'
               )}
             >
+              <span className="material-symbols-outlined text-[14px]">{f.icon}</span>
               {f.label}
             </button>
           ))}
         </div>
-      </header>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Featured */}
-        {featuredOpp && (
-          <article className="col-span-1 md:col-span-2 lg:col-span-2 row-span-2 group relative border border-primary bg-surface-container-lowest overflow-hidden flex flex-col justify-between p-8 hover:bg-surface-container transition-colors duration-300">
-            <div className="absolute top-0 right-0 p-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-primary text-on-primary rounded-full font-bold text-xl">{featuredOpp.match}%</div>
-            </div>
-            <div className="z-10 relative mt-16">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="px-2 py-1 bg-secondary-container text-on-secondary-container text-xs font-medium border border-outline-variant rounded-sm">{featuredOpp.badge}</span>
-                <span className="text-label-md font-medium text-on-surface-variant">{featuredOpp.closes}</span>
-              </div>
-              <h3 className="text-[48px] leading-[1.1] font-bold text-primary mb-4">{featuredOpp.title}</h3>
-              <p className="text-body-lg text-on-surface-variant max-w-xl mb-8">{featuredOpp.desc}</p>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => window.open(featuredOpp.url, '_blank')}
-                  className="px-8 py-3 bg-primary text-on-primary font-bold hover:bg-tertiary transition-colors border border-primary cursor-pointer"
-                >
-                  {featuredOpp.cta}
-                </button>
-                <button
-                  onClick={() => toggleBookmark(featuredOpp.title)}
-                  className={cn(
-                    'p-3 border border-primary hover:bg-surface-container-high transition-colors flex items-center justify-center cursor-pointer bg-transparent',
-                    bookmarked.has(featuredOpp.title) && 'text-primary'
-                  )}
-                >
-                  <span className={cn('material-symbols-outlined', bookmarked.has(featuredOpp.title) && 'icon-fill')}>bookmark</span>
-                </button>
-              </div>
-            </div>
-            <div className="absolute bottom-0 right-0 w-64 h-64 bg-surface-container-high rounded-tl-full opacity-50 z-0 border-l border-t border-outline-variant pointer-events-none" />
-          </article>
-        )}
+      {/* Stats */}
+      {!loading && items.length > 0 && (
+        <div className="px-4 py-2 border-b border-outline text-[13px] text-on-surface-variant flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-sm">trending_up</span>
+          {totalCount} opportunit{totalCount !== 1 ? 'ies' : 'y'} found
+        </div>
+      )}
 
-        {/* Other Cards */}
-        {others.map((opp) => (
-          <article
-            key={opp.title}
-            className={cn(
-              'border border-primary p-6 flex flex-col hover:bg-surface-container transition-colors relative group',
-              opp.dark ? 'bg-tertiary text-on-tertiary' : 'bg-surface-container-lowest'
-            )}
-          >
-            <div className="flex justify-between items-start mb-4">
-              <span className={cn(
-                'px-2 py-1 text-xs font-medium border rounded-sm',
-                opp.dark ? 'bg-tertiary-container text-on-tertiary-container border-outline-variant' : 'bg-surface-variant text-on-surface border-outline-variant'
-              )}>
-                {opp.badge}
-              </span>
-              <span className={cn('font-bold text-xl', opp.dark ? 'text-on-tertiary' : 'text-primary')}>{opp.match}%</span>
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 text-error px-4 py-3 bg-error-container/30">
+          <span className="material-symbols-outlined text-lg">error</span>
+          <span className="text-sm">{error}</span>
+          <button onClick={() => loadOpportunities(filter === 'all' ? {} : { category: filter })} className="ml-auto text-sm text-primary hover:underline bg-transparent border-none cursor-pointer">Retry</button>
+        </div>
+      )}
+
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="flex flex-col">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="px-4 py-3 border-b border-outline animate-pulse">
+              <div className="flex gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--c-elevated)]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-[var(--c-elevated)] rounded w-1/4" />
+                  <div className="h-4 bg-[var(--c-elevated)] rounded w-3/4" />
+                  <div className="h-3 bg-[var(--c-elevated)] rounded w-full" />
+                </div>
+              </div>
             </div>
-            <h3 className={cn('text-headline-md font-bold mb-2 leading-tight', opp.dark ? 'text-on-tertiary' : 'text-primary')}>
-              {opp.title}
-            </h3>
-            <p className={cn('text-body-md mb-6 flex-1', opp.dark ? 'text-on-tertiary-container' : 'text-on-surface-variant')}>{opp.desc}</p>
-            <div className="border-t border-outline-variant pt-4 flex justify-between items-center mt-auto">
-              <span className={cn('text-label-md font-medium flex items-center gap-1', opp.dark ? 'text-on-tertiary-container' : 'text-on-surface-variant')}>
-                <span className="material-symbols-outlined text-sm">calendar_today</span> {opp.deadline}
-              </span>
-              <button
-                onClick={() => window.open(opp.url, '_blank')}
-                className={cn(
-                  'font-bold hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer',
-                  opp.dark ? 'text-on-tertiary' : 'text-primary'
-                )}
-              >
-                {opp.cta} <span className="material-symbols-outlined text-sm">arrow_forward</span>
-              </button>
-            </div>
-          </article>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && items.length === 0 && !error && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-4">work</span>
+          <h3 className="text-lg font-bold text-on-surface mb-2">No opportunities found</h3>
+          <p className="text-on-surface-variant text-sm max-w-xs">
+            {filter !== 'all'
+              ? `No ${filter} opportunities yet. Try a different filter.`
+              : 'Opportunities will appear as AI funding, competitions, and internships are collected.'}
+          </p>
+        </div>
+      )}
+
+      {/* Feed */}
+      <div className="flex flex-col page-transition">
+        {!loading && items.map((item) => (
+          <FeedCard key={item.id} item={item} showScore score={item.importance_score} />
         ))}
       </div>
+
+      {/* Load more */}
+      {hasMore && !loading && (
+        <button
+          onClick={() => loadOpportunities(
+            { category: filter === 'all' ? undefined : filter, offset: items.length },
+            true
+          )}
+          className="w-full py-4 text-center text-primary font-semibold text-[15px] hover:bg-[var(--c-raised)] transition-colors bg-transparent border-none border-t border-outline cursor-pointer"
+        >
+          Show more
+        </button>
+      )}
     </div>
   );
 }

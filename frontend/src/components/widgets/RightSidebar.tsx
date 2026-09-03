@@ -1,18 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingModels } from './TrendingModels';
-import { UpcomingDeadlines } from './UpcomingDeadlines';
-import { SuggestedOrganizations } from './SuggestedOrganizations';
-import { TRENDING_MODELS, DEADLINES, SUGGESTED_ORGANIZATIONS } from '@/utils/mockData';
-import { getTrending, type TagCount } from '@/services/feedService';
+import { TopCategories } from './TrendingModels';
+import { TopStories } from './SuggestedOrganizations';
+import { getTrending, getCategories, type TagCount, type CategoryCount, type FeedItem } from '@/services/feedService';
 
 export function RightSidebar() {
   const navigate = useNavigate();
   const [trendingTags, setTrendingTags] = useState<TagCount[]>([]);
+  const [categories, setCategories] = useState<CategoryCount[]>([]);
+  const [topStories, setTopStories] = useState<FeedItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    getTrending(8).then((r) => { if (r.success && r.data) setTrendingTags(r.data.top_tags); });
+    getTrending(8).then((r) => {
+      if (r.success && r.data) {
+        setTrendingTags(r.data.top_tags);
+        setTopStories(r.data.most_important ?? []);
+      }
+    });
+    getCategories(10).then((r) => {
+      if (r.success && r.data) setCategories(r.data);
+    });
   }, []);
 
   function handleSearch(e: React.FormEvent) {
@@ -51,16 +59,15 @@ export function RightSidebar() {
         </div>
       )}
 
-      <TrendingModels models={TRENDING_MODELS.slice(0, 3)} />
-      <UpcomingDeadlines deadlines={DEADLINES.slice(0, 3)} />
-      <SuggestedOrganizations organizations={SUGGESTED_ORGANIZATIONS.slice(0, 3)} />
+      <TopCategories categories={categories} />
+      <TopStories stories={topStories} />
 
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-on-surface-variant px-1 pb-4">
-        <a className="hover:underline" href="#">Terms</a>
-        <a className="hover:underline" href="#">Privacy</a>
-        <a className="hover:underline" href="#">Cookies</a>
-        <a className="hover:underline" href="#">Accessibility</a>
-        <span className="block w-full mt-1 text-on-surface-variant/60">© 2024 AI News Notifier</span>
+        <span>Terms</span>
+        <span>Privacy</span>
+        <span>Cookies</span>
+        <span>Accessibility</span>
+        <span className="block w-full mt-1 text-on-surface-variant/60">© {new Date().getFullYear()} AI News Notifier</span>
       </div>
     </aside>
   );

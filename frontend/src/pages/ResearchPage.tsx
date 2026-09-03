@@ -1,139 +1,171 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-
-const FEATURED = {
-  id: '2405.01234',
-  title: 'Emergent Reasoning Protocols in Large Language Models',
-  summary: 'An exhaustive analysis of multi-step inference capabilities in models exceeding 100B parameters, demonstrating spontaneous protocol generation without explicit few-shot prompting.',
-  tags: ['Reasoning', 'LLM Architecture'],
-  relevance: 98,
-  url: 'https://arxiv.org/abs/2405.01234',
-};
-
-const CITATIONS = [
-  { rank: '01', title: 'Attention Mechanisms in Vision Models', src: 'NATURE AI • +450 citations/wk', w: '85%', url: 'https://scholar.google.com/scholar?q=attention+mechanisms+vision+models' },
-  { rank: '02', title: 'Quantum-Assisted Neural Training', src: 'IEEE Xplore • +320 citations/wk', w: '65%', url: 'https://scholar.google.com/scholar?q=quantum+assisted+neural+training' },
-  { rank: '03', title: 'Neuromorphic Hardware Benchmarks', src: 'ARXIV • +290 citations/wk', w: '50%', url: 'https://scholar.google.com/scholar?q=neuromorphic+hardware+benchmarks' },
-];
-
-const CURATED = [
-  { cat: 'Hardware', title: 'Scaling Laws for Silicon-Photonic Neural Chips', desc: 'A critical review of power consumption metrics as optical computing intersects with traditional von Neumann architectures.', author: 'Chen, et al.', views: '12.4k', url: 'https://arxiv.org/search/?query=silicon+photonic+neural&searchtype=all' },
-  { cat: 'Ethics / Policy', title: 'Algorithmic Bias in Predictive Policing Models', desc: 'Meta-analysis revealing systemic failure points in demographic weighting across five major deployment jurisdictions.', author: 'Davis, M.', views: '8.9k', url: 'https://arxiv.org/search/?query=algorithmic+bias+policing&searchtype=all' },
-  { cat: 'Algorithms', title: 'Optimizing Sparse Attention via Graph Theory', desc: 'Proposing a novel mapping technique that reduces memory footprint by 40% without sacrificing perplexity scores.', author: 'Kumar & Lin', views: '15.1k', url: 'https://arxiv.org/search/?query=sparse+attention+graph+theory&searchtype=all' },
-];
+import { FeedCard } from '@/components/feed/FeedCard';
+import { searchFeed, getTrending, type FeedItem, type TrendingResponse, type SearchParams } from '@/services/feedService';
 
 export default function ResearchPage() {
   useDocumentTitle('Research — AI News Notifier');
   const navigate = useNavigate();
+  const [items, setItems] = useState<FeedItem[]>([]);
+  const [trending, setTrending] = useState<TrendingResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasMore, setHasMore] = useState(false);
+
+  const loadResearch = useCallback(async (params: SearchParams = {}, append = false) => {
+    if (!append) setLoading(true);
+    setError('');
+    try {
+      const result = await searchFeed({
+        category: 'ai_research',
+        sort: 'highest_importance',
+        limit: 20,
+        ...params,
+      });
+      if (result.success && result.data) {
+        setItems((prev) => append ? [...prev, ...result.data!.items] : result.data!.items);
+        setHasMore(result.data.pagination.has_more);
+      }
+    } catch {
+      setError('Failed to load research articles.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadResearch();
+    getTrending(5).then((r) => r.success && r.data && setTrending(r.data));
+  }, [loadResearch]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/news?q=${encodeURIComponent(searchQuery.trim())}&category=ai_research`);
+      loadResearch({ q: searchQuery.trim() });
+    } else {
+      loadResearch();
     }
   }
 
+  const topResearch = !loading && items.length > 0 ? items[0] : null;
+  const restItems = !loading && items.length > 1 ? items.slice(1) : [];
+
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
-      {/* Search */}
-      <form onSubmit={handleSearch} className="mb-8">
-        <div className="relative">
-          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search research papers..."
-            className="w-full py-3 pl-12 pr-4 bg-surface-container border border-outline text-body-md font-body text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors rounded"
-          />
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline">
+        <div className="px-4 py-2.5">
+          <h2 className="text-xl font-bold text-on-surface">Research</h2>
+          <p className="text-[13px] text-on-surface-variant mt-0.5">AI research papers and publications from arXiv and more</p>
         </div>
-      </form>
+        <form onSubmit={handleSearch} className="px-4 pb-3">
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search research papers..."
+              className="w-full py-2.5 pl-10 pr-4 bg-[var(--c-elevated)] border-none rounded-full text-[15px] text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface transition-all"
+            />
+          </div>
+        </form>
+      </div>
 
-      {/* Hero Section */}
-      <section className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-12">
-        {/* Featured Article */}
-        <article
-          onClick={() => window.open(FEATURED.url, '_blank')}
-          className="md:col-span-8 bg-surface-container-lowest border-2 border-primary rounded-lg overflow-hidden flex flex-col group relative cursor-pointer"
-        >
-          <div className="p-6 border-b border-primary flex justify-between items-center bg-surface-container">
-            <span className="text-label-md font-medium text-primary font-bold">BREAKING RESEARCH // ARXIV</span>
-            <span className="text-label-md font-medium text-on-surface-variant">ID: {FEATURED.id}</span>
-          </div>
-          <div className="flex-1 p-8 flex flex-col justify-center">
-            <h2 className="text-headline-lg font-bold text-primary mb-6 leading-none group-hover:text-surface-tint transition-colors">{FEATURED.title}</h2>
-            <p className="text-body-lg text-on-surface-variant mb-8 max-w-2xl border-l-4 border-primary pl-4">{FEATURED.summary}</p>
-            <div className="flex flex-wrap gap-3 mt-auto">
-              {FEATURED.tags.map((t) => (
-                <span key={t} className="px-3 py-1 bg-surface-container-high text-on-surface-variant text-label-md font-medium rounded-full border border-outline-variant">{t}</span>
-              ))}
-              <span className="px-3 py-1 bg-primary text-on-primary text-label-md font-medium rounded-full border border-primary font-bold">{FEATURED.relevance}% Relevance</span>
-            </div>
-          </div>
-          <div className="absolute bottom-0 right-0 w-1/3 h-full opacity-5 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #16191e 0, #16191e 2px, transparent 2px, transparent 8px)' }} />
-        </article>
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 text-error px-4 py-3 bg-error-container/30">
+          <span className="material-symbols-outlined text-lg">error</span>
+          <span className="text-sm">{error}</span>
+          <button onClick={() => loadResearch()} className="ml-auto text-sm text-primary hover:underline bg-transparent border-none cursor-pointer">Retry</button>
+        </div>
+      )}
 
-        {/* Citation Velocity */}
-        <aside className="md:col-span-4 bg-primary text-on-primary rounded-lg flex flex-col border border-primary overflow-hidden">
-          <div className="p-4 border-b border-surface-tint bg-primary-container flex items-center justify-between">
-            <span className="text-label-md font-medium font-bold text-on-primary-container">Citation Velocity</span>
-            <span className="material-symbols-outlined text-on-primary-container">trending_up</span>
-          </div>
-          <div className="p-6 flex-1 flex flex-col gap-6">
-            {CITATIONS.map((item, i) => (
-              <div
-                key={item.rank}
-                onClick={() => window.open(item.url, '_blank')}
-                className={`flex items-start gap-4 cursor-pointer hover:opacity-80 transition-opacity ${i < 2 ? 'pb-4 border-b border-surface-tint' : ''}`}
-              >
-                <span className="text-headline-md font-bold text-surface-dim">{item.rank}</span>
-                <div>
-                  <h4 className="text-body-lg font-bold leading-tight mb-1">{item.title}</h4>
-                  <span className="text-label-md font-medium text-inverse-on-surface block mb-2">{item.src}</span>
-                  <div className="w-full bg-surface-tint h-1 mt-2"><div className="bg-on-primary h-1" style={{ width: item.w }} /></div>
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="flex flex-col">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="px-4 py-3 border-b border-outline animate-pulse">
+              <div className="flex gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--c-elevated)]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-[var(--c-elevated)] rounded w-1/4" />
+                  <div className="h-4 bg-[var(--c-elevated)] rounded w-3/4" />
+                  <div className="h-3 bg-[var(--c-elevated)] rounded w-full" />
                 </div>
               </div>
-            ))}
-          </div>
-        </aside>
-      </section>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Curated Intelligence */}
-      <div className="flex items-center justify-between mb-6 border-b-2 border-primary pb-2">
-        <h3 className="text-headline-md font-bold text-primary">Curated Intelligence</h3>
-        <button
-          onClick={() => navigate('/news?category=ai_research')}
-          className="text-label-md font-medium font-bold text-primary hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer"
-        >
-          View Full Corpus <span className="material-symbols-outlined text-sm">arrow_forward</span>
-        </button>
-      </div>
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {CURATED.map((card) => (
-          <div
-            key={card.title}
-            onClick={() => window.open(card.url, '_blank')}
-            className="bg-surface-container-lowest border border-outline hover:border-primary transition-colors flex flex-col h-full rounded-md shadow-sm cursor-pointer group"
+      {/* Empty state */}
+      {!loading && items.length === 0 && !error && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-4">science</span>
+          <h3 className="text-lg font-bold text-on-surface mb-2">No research articles found</h3>
+          <p className="text-on-surface-variant text-sm max-w-xs">
+            {searchQuery ? 'Try a different search term.' : 'Research papers will appear once the arXiv collectors run.'}
+          </p>
+        </div>
+      )}
+
+      {/* Featured research article */}
+      {topResearch && (
+        <div className="border-b border-outline">
+          <a
+            href={topResearch.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block px-4 py-4 bg-primary/5 hover:bg-primary/10 transition-colors no-underline"
           >
-            <div className="h-48 border-b border-outline relative overflow-hidden bg-surface-container-highest">
-              <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-6xl text-primary/30 group-hover:scale-110 transition-transform">description</span>
-              </div>
-              <div className="absolute top-4 left-4 bg-primary text-on-primary text-xs font-medium px-2 py-1 font-bold">{card.cat}</div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-0.5 bg-primary text-on-primary text-[11px] font-bold rounded-full">TOP RESEARCH</span>
+              <span className="text-[13px] text-on-surface-variant">{topResearch.organization}</span>
+              {topResearch.importance_score > 0 && (
+                <span className="ml-auto text-[13px] font-medium text-primary">{topResearch.importance_score}% relevance</span>
+              )}
             </div>
-            <div className="p-5 flex flex-col flex-1">
-              <h4 className="text-body-lg font-bold text-on-surface mb-2 leading-snug group-hover:text-primary transition-colors">{card.title}</h4>
-              <p className="text-body-md text-on-surface-variant line-clamp-3 mb-4">{card.desc}</p>
-              <div className="mt-auto flex justify-between items-center text-label-md font-medium text-on-surface-variant pt-4 border-t border-surface-container-high">
-                <span>Author: {card.author}</span>
-                <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">visibility</span> {card.views}</span>
+            <h3 className="text-[17px] font-bold text-on-surface leading-snug mb-1">{topResearch.cleaned_title}</h3>
+            <p className="text-[14px] text-on-surface-variant leading-[1.4] line-clamp-3">{topResearch.ai_summary}</p>
+            {topResearch.ai_tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {topResearch.ai_tags.slice(0, 5).map((tag) => (
+                  <span key={tag} className="text-[12px] text-primary bg-primary/5 px-2 py-0.5 rounded-full">{tag}</span>
+                ))}
               </div>
-            </div>
-          </div>
+            )}
+          </a>
+        </div>
+      )}
+
+      {/* Stats bar */}
+      {trending && !loading && items.length > 0 && (
+        <div className="px-4 py-2 border-b border-outline text-[13px] text-on-surface-variant flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-sm">science</span>
+          {items.length} research article{items.length !== 1 ? 's' : ''} loaded
+          {trending.total_ready > 0 && <span className="ml-1">· {trending.total_ready} total in database</span>}
+        </div>
+      )}
+
+      {/* Feed */}
+      <div className="flex flex-col page-transition">
+        {restItems.map((item) => (
+          <FeedCard key={item.id} item={item} showScore score={item.importance_score} />
         ))}
-      </section>
+      </div>
+
+      {/* Load more */}
+      {hasMore && !loading && (
+        <button
+          onClick={() => loadResearch({ q: searchQuery.trim() || undefined, offset: items.length }, true)}
+          className="w-full py-4 text-center text-primary font-semibold text-[15px] hover:bg-[var(--c-raised)] transition-colors bg-transparent border-none border-t border-outline cursor-pointer"
+        >
+          Show more
+        </button>
+      )}
     </div>
   );
 }

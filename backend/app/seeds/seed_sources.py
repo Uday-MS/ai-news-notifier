@@ -21,7 +21,7 @@ LIVE_AI_SOURCES: list[dict] = [
     # ── Official AI Organization Blogs ────────────────────────────────
     {
         "name": "openai-blog",
-        "collector_type": "blog",
+        "collector_type": "rss",
         "url": "https://openai.com/blog/rss.xml",
         "config": {
             "organization": "OpenAI",
@@ -30,11 +30,11 @@ LIVE_AI_SOURCES: list[dict] = [
         "collection_interval_minutes": 60,
     },
     {
-        "name": "anthropic-news",
+        "name": "techcrunch-ai",
         "collector_type": "rss",
-        "url": "https://www.anthropic.com/rss.xml",
+        "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
         "config": {
-            "organization": "Anthropic",
+            "organization": "TechCrunch",
             "event_type": "news",
         },
         "collection_interval_minutes": 60,
@@ -50,12 +50,12 @@ LIVE_AI_SOURCES: list[dict] = [
         "collection_interval_minutes": 120,
     },
     {
-        "name": "meta-ai-blog",
+        "name": "venturebeat-ai",
         "collector_type": "rss",
-        "url": "https://ai.meta.com/blog/rss/",
+        "url": "https://venturebeat.com/category/ai/feed/",
         "config": {
-            "organization": "Meta AI",
-            "event_type": "blog_post",
+            "organization": "VentureBeat",
+            "event_type": "news",
         },
         "collection_interval_minutes": 120,
     },
@@ -72,9 +72,9 @@ LIVE_AI_SOURCES: list[dict] = [
     {
         "name": "microsoft-ai-blog",
         "collector_type": "rss",
-        "url": "https://blogs.microsoft.com/ai/feed/",
+        "url": "https://blogs.microsoft.com/feed/",
         "config": {
-            "organization": "Microsoft AI",
+            "organization": "Microsoft",
             "event_type": "blog_post",
         },
         "collection_interval_minutes": 120,

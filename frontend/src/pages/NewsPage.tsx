@@ -33,8 +33,10 @@ export default function NewsPage() {
   useEffect(() => {
     const q = urlParams.get('q') ?? '';
     const tag = urlParams.get('tag') ?? '';
+    const cat = urlParams.get('category') ?? '';
     setSearchQuery(q);
-    loadFeed({ q: q || undefined, tag: tag || undefined });
+    if (cat) setActiveCategory(cat);
+    loadFeed({ q: q || undefined, tag: tag || undefined, category: cat || undefined });
     getTrending(10).then((r) => r.success && r.data && setTrending(r.data));
     getCategories(20).then((r) => r.success && r.data && setCategories(r.data));
   }, [loadFeed, urlParams]);

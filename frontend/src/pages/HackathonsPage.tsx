@@ -1,172 +1,169 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { FeedCard } from '@/components/feed/FeedCard';
+import { searchFeed, type FeedItem, type SearchParams } from '@/services/feedService';
 import { cn } from '@/utils/cn';
 
-type TabFilter = 'upcoming' | 'ongoing' | 'completed';
+type Filter = 'all' | 'competition' | 'hackathon';
 
-const FEATURED = {
-  status: 'upcoming' as TabFilter,
-  title: 'Agentic Reasoning Decathlon',
-  host: 'Mistral AI',
-  desc: 'Build multi-agent systems capable of solving complex, multi-step logical puzzles without human intervention. Evaluation based on reasoning accuracy and execution efficiency.',
-  prize: '$50,000',
-  closes: 'Oct 15, 2024',
-  format: 'Virtual',
-  url: 'https://mistral.ai/news/',
-  img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA16Yj0lmD-H6tTliiCZmOzSOmfmLZGFEtiSS9DIAbvsa_kDDfd1m8U4NT_cC7PBf2X4kxA9xedGTMI1CCt2f_eIEz-bOEeXFIfNlKtPcEn7r-PROW_uGxHiQoPfb2Tmjx0qNaxG1El_vx6WybO--u75nexrlH6JZg7giTEPSlGDaaRo3AuQt0aNpZf2As1riZFPbIPDwVL1LeEq97sa8gbsZre_zKJGhWmzv3zDYqre5-sv4oxsykdaZJ6piI6QksLjT8X8gUbNmc',
-};
-
-const ELITE = {
-  status: 'upcoming' as TabFilter,
-  title: 'LLM Security & Red Teaming Challenge',
-  host: 'OpenAI',
-  prize: '$25,000',
-  deadline: 'Nov 01, 2024',
-  teamSize: '1 - 4 Members',
-  url: 'https://openai.com/blog/red-teaming-network',
-};
-
-const STANDARD = [
-  { status: 'upcoming' as TabFilter, icon: 'memory', cat: 'Hardware', title: 'Edge AI Optimization', host: 'Hosted by NVIDIA', prize: '4x RTX 6090', prizeLabel: 'Top Prize', closes: 'Dec 15', url: 'https://www.nvidia.com/en-us/research/' },
-  { status: 'ongoing' as TabFilter, icon: 'dataset', cat: '$100k Seed', title: 'Healthcare Data Synthesizer', host: 'Hosted by DeepMind & NHS', prize: 'Privacy', prizeLabel: 'Focus', closes: 'Jan 10', url: 'https://deepmind.google/discover/blog/' },
-  { status: 'upcoming' as TabFilter, icon: 'scatter_plot', cat: '$15,000', title: 'Quantum ML Algorithms', host: 'Hosted by IBM Quantum', prize: 'Qiskit Runtime', prizeLabel: 'Access', closes: 'Jan 22', url: 'https://www.ibm.com/quantum' },
-];
-
-const TABS: { value: TabFilter; label: string }[] = [
-  { value: 'upcoming', label: 'Upcoming' },
-  { value: 'ongoing', label: 'Ongoing' },
-  { value: 'completed', label: 'Completed' },
+const FILTERS: { value: Filter; label: string; icon: string }[] = [
+  { value: 'all', label: 'All Events', icon: 'emoji_events' },
+  { value: 'competition', label: 'Competitions', icon: 'trophy' },
+  { value: 'hackathon', label: 'Hackathons', icon: 'code' },
 ];
 
 export default function HackathonsPage() {
-  useDocumentTitle('Hackathons — AI News Notifier');
-  const [activeTab, setActiveTab] = useState<TabFilter>('upcoming');
+  useDocumentTitle('Hackathons & Competitions — AI News Notifier');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [items, setItems] = useState<FeedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const filteredStandard = STANDARD.filter((s) => s.status === activeTab);
-  const showFeatured = FEATURED.status === activeTab;
-  const showElite = ELITE.status === activeTab;
+  const loadEvents = useCallback(async (params: SearchParams = {}, append = false) => {
+    if (!append) setLoading(true);
+    setError('');
+    try {
+      const searchParams: SearchParams = {
+        sort: 'highest_importance',
+        limit: 20,
+        ...params,
+      };
+
+      if (params.category) {
+        const result = await searchFeed(searchParams);
+        if (result.success && result.data) {
+          setItems((prev) => append ? [...prev, ...result.data!.items] : result.data!.items);
+          setHasMore(result.data.pagination.has_more);
+          setTotalCount(result.data.pagination.total);
+        }
+      } else {
+        // "All" — load from both competition and hackathon categories
+        const [compResult, hackResult] = await Promise.all([
+          searchFeed({ ...searchParams, category: 'competition', limit: 15 }),
+          searchFeed({ ...searchParams, category: 'hackathon', limit: 15 }),
+        ]);
+        const allItems: FeedItem[] = [];
+        let total = 0;
+        for (const r of [compResult, hackResult]) {
+          if (r.success && r.data) {
+            allItems.push(...r.data.items);
+            total += r.data.pagination.total;
+          }
+        }
+        allItems.sort((a, b) => b.importance_score - a.importance_score);
+        setItems(append ? (prev) => [...prev, ...allItems] : allItems);
+        setHasMore(total > allItems.length);
+        setTotalCount(total);
+      }
+    } catch {
+      setError('Failed to load events.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEvents(filter === 'all' ? {} : { category: filter });
+  }, [filter, loadEvents]);
 
   return (
-    <div className="flex-1 p-8 lg:p-[64px]">
+    <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-primary pb-6">
-        <div>
-          <h2 className="font-bold text-[48px] leading-none text-primary">High-Stakes Arena</h2>
-          <p className="font-medium text-label-md text-secondary mt-2 max-w-2xl">Discover and register for elite artificial intelligence hackathons. Precision engineering meets competitive problem-solving.</p>
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline">
+        <div className="px-4 py-2.5">
+          <h2 className="text-xl font-bold text-on-surface">Hackathons & Competitions</h2>
+          <p className="text-[13px] text-on-surface-variant mt-0.5">AI competitions, challenges, and hackathon events</p>
         </div>
-        <div className="flex gap-2 bg-surface-container-lowest border border-outline p-1 rounded-sm w-fit">
-          {TABS.map((tab) => (
+
+        {/* Filters */}
+        <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
+          {FILTERS.map((f) => (
             <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
+              key={f.value}
+              onClick={() => setFilter(f.value)}
               className={cn(
-                'px-6 py-2 font-bold text-sm rounded-sm border-none cursor-pointer transition-colors',
-                activeTab === tab.value
-                  ? 'bg-primary text-on-primary'
-                  : 'text-on-surface-variant hover:bg-surface-container bg-transparent'
+                'px-3 py-1.5 text-[13px] rounded-full border whitespace-nowrap transition-colors cursor-pointer shrink-0 flex items-center gap-1.5',
+                filter === f.value
+                  ? 'bg-on-surface text-surface border-on-surface font-semibold'
+                  : 'bg-transparent text-on-surface border-[var(--c-border-strong)] hover:bg-[var(--c-elevated)]'
               )}
             >
-              {tab.label}
+              <span className="material-symbols-outlined text-[14px]">{f.icon}</span>
+              {f.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Empty state for completed */}
-      {!showFeatured && !showElite && filteredStandard.length === 0 && (
+      {/* Stats */}
+      {!loading && items.length > 0 && (
+        <div className="px-4 py-2 border-b border-outline text-[13px] text-on-surface-variant flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-sm">emoji_events</span>
+          {totalCount} event{totalCount !== 1 ? 's' : ''} found
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 text-error px-4 py-3 bg-error-container/30">
+          <span className="material-symbols-outlined text-lg">error</span>
+          <span className="text-sm">{error}</span>
+          <button onClick={() => loadEvents(filter === 'all' ? {} : { category: filter })} className="ml-auto text-sm text-primary hover:underline bg-transparent border-none cursor-pointer">Retry</button>
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div className="flex flex-col">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="px-4 py-3 border-b border-outline animate-pulse">
+              <div className="flex gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--c-elevated)]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-[var(--c-elevated)] rounded w-1/4" />
+                  <div className="h-4 bg-[var(--c-elevated)] rounded w-3/4" />
+                  <div className="h-3 bg-[var(--c-elevated)] rounded w-full" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty */}
+      {!loading && items.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="material-symbols-outlined text-6xl text-on-surface-variant mb-4">emoji_events</span>
-          <h3 className="text-xl font-bold text-on-surface mb-2">No {activeTab} hackathons</h3>
-          <p className="text-on-surface-variant font-body text-sm max-w-xs">
-            {activeTab === 'completed' ? 'Completed hackathons will appear here.' : 'Check back soon for new events.'}
+          <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-4">emoji_events</span>
+          <h3 className="text-lg font-bold text-on-surface mb-2">No events found</h3>
+          <p className="text-on-surface-variant text-sm max-w-xs">
+            {filter !== 'all'
+              ? `No ${filter} events yet. Try "All Events".`
+              : 'Hackathons and competitions will appear as they are collected from AI sources.'}
           </p>
         </div>
       )}
 
-      {/* Bento Grid */}
-      {(showFeatured || showElite || filteredStandard.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-[minmax(300px,auto)]">
-          {/* Highlight Card */}
-          {showFeatured && (
-            <article
-              onClick={() => window.open(FEATURED.url, '_blank')}
-              className="md:col-span-8 bg-surface-container-lowest border border-primary flex flex-col group relative overflow-hidden rounded cursor-pointer"
-            >
-              <div className="h-64 border-b border-primary relative overflow-hidden bg-surface-container-highest">
-                <img className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500 mix-blend-luminosity" alt="Hackathon visual" src={FEATURED.img} />
-                <div className="absolute top-4 left-4 bg-primary text-on-primary px-3 py-1 font-bold text-xs border border-primary">Featured</div>
-              </div>
-              <div className="p-8 flex flex-col flex-1 justify-between bg-surface-container-lowest">
-                <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-[32px] text-primary leading-tight group-hover:underline">{FEATURED.title}</h3>
-                    <span className="font-bold text-[24px] text-primary bg-surface-container px-3 py-1 border border-outline">{FEATURED.prize}</span>
-                  </div>
-                  <p className="font-medium text-on-surface-variant text-sm flex items-center gap-2 mb-6">
-                    <span className="material-symbols-outlined text-[16px]">corporate_fare</span> Hosted by {FEATURED.host}
-                  </p>
-                  <p className="font-body text-body-lg text-on-surface mb-8 max-w-xl">{FEATURED.desc}</p>
-                </div>
-                <div className="flex items-center justify-between border-t border-outline pt-6">
-                  <div className="flex items-center gap-6">
-                    <div className="flex flex-col"><span className="font-medium text-xs text-secondary">Registration Closes</span><span className="font-bold text-lg text-primary">{FEATURED.closes}</span></div>
-                    <div className="w-px h-10 bg-outline" />
-                    <div className="flex flex-col"><span className="font-medium text-xs text-secondary">Format</span><span className="font-bold text-lg text-primary">{FEATURED.format}</span></div>
-                  </div>
-                </div>
-              </div>
-            </article>
-          )}
+      {/* Feed */}
+      <div className="flex flex-col page-transition">
+        {!loading && items.map((item) => (
+          <FeedCard key={item.id} item={item} showScore score={item.importance_score} />
+        ))}
+      </div>
 
-          {/* Elite Card */}
-          {showElite && (
-            <article
-              onClick={() => window.open(ELITE.url, '_blank')}
-              className="md:col-span-4 bg-primary text-on-primary border border-primary flex flex-col rounded p-6 relative overflow-hidden cursor-pointer group"
-            >
-              <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
-              <div className="flex-1 z-10 flex flex-col">
-                <div className="mb-auto">
-                  <div className="inline-block bg-surface text-primary px-2 py-1 font-bold text-xs mb-6">Elite Tier</div>
-                  <h3 className="font-bold text-[28px] leading-tight mb-2 group-hover:underline">{ELITE.title}</h3>
-                  <p className="font-medium text-inverse-primary text-sm mb-6 border-b border-surface-tint pb-4">Hosted by {ELITE.host}</p>
-                </div>
-                <div className="bg-surface-tint/30 border border-surface-tint p-4 rounded mb-6 backdrop-blur-sm">
-                  <span className="font-medium text-xs text-inverse-primary block mb-1">Prize Pool</span>
-                  <span className="font-bold text-[32px] block leading-none">{ELITE.prize}</span>
-                </div>
-                <div className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center font-medium text-sm border-b border-surface-tint pb-2"><span className="uppercase text-inverse-primary">Deadline</span><span>{ELITE.deadline}</span></div>
-                  <div className="flex justify-between items-center font-medium text-sm border-b border-surface-tint pb-2"><span className="uppercase text-inverse-primary">Team Size</span><span>{ELITE.teamSize}</span></div>
-                </div>
-              </div>
-            </article>
+      {/* Load more */}
+      {hasMore && !loading && (
+        <button
+          onClick={() => loadEvents(
+            { category: filter === 'all' ? undefined : filter, offset: items.length },
+            true
           )}
-
-          {/* Standard Cards */}
-          {filteredStandard.map((s) => (
-            <article
-              key={s.title}
-              onClick={() => window.open(s.url, '_blank')}
-              className="md:col-span-4 bg-surface-container-lowest border border-outline flex flex-col p-6 rounded hover:border-primary transition-colors group cursor-pointer"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 bg-surface-container flex items-center justify-center rounded border border-outline-variant group-hover:bg-primary group-hover:text-on-primary transition-colors">
-                  <span className="material-symbols-outlined">{s.icon}</span>
-                </div>
-                <span className="font-bold text-lg text-primary bg-surface px-2 py-1 border border-outline-variant rounded-sm group-hover:border-primary transition-colors">{s.cat}</span>
-              </div>
-              <h3 className="font-bold text-[24px] text-primary leading-tight mb-1 group-hover:underline">{s.title}</h3>
-              <p className="font-medium text-secondary text-xs mb-4">{s.host}</p>
-              <div className="mt-auto pt-6 border-t border-outline-variant flex justify-between items-end">
-                <div><span className="font-medium text-xs text-secondary block">{s.prizeLabel}</span><span className="font-bold text-primary text-xl">{s.prize}</span></div>
-                <div className="text-right"><span className="font-medium text-xs text-secondary block">Closes</span><span className="font-body text-primary font-bold">{s.closes}</span></div>
-              </div>
-            </article>
-          ))}
-        </div>
+          className="w-full py-4 text-center text-primary font-semibold text-[15px] hover:bg-[var(--c-raised)] transition-colors bg-transparent border-none border-t border-outline cursor-pointer"
+        >
+          Show more
+        </button>
       )}
-      <div className="h-24" />
     </div>
   );
 }

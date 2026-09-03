@@ -1,140 +1,163 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-
-const ALL_REPOS = [
-  { name: 'ggerganov / llama.cpp', desc: "Port of Facebook's LLaMA model in C/C++. Inference of LLaMA model in pure C/C++.", lang: 'C++', stars: '52k', url: 'https://github.com/ggerganov/llama.cpp' },
-  { name: 'chroma-core / chroma', desc: 'the open source AI native vector database. Chroma makes it easy to build AI apps.', lang: 'Python', stars: '11k', url: 'https://github.com/chroma-core/chroma' },
-  { name: 'hwchase17 / langchain', desc: 'Building applications with LLMs through composability. Orchestration framework.', lang: 'Python', stars: '78k', url: 'https://github.com/langchain-ai/langchain' },
-  { name: 'huggingface / transformers', desc: 'State-of-the-art Machine Learning for PyTorch, TensorFlow, and JAX.', lang: 'Python', stars: '120k', url: 'https://github.com/huggingface/transformers' },
-  { name: 'openai / whisper', desc: 'Robust Speech Recognition via Large-Scale Weak Supervision.', lang: 'Python', stars: '58k', url: 'https://github.com/openai/whisper' },
-  { name: 'rustformers / llm', desc: 'Run inference for Large Language Models on CPU, with Rust.', lang: 'Rust', stars: '6.2k', url: 'https://github.com/rustformers/llm' },
-];
-
-const FEATURED = {
-  name: 'mistralai / mistral-src',
-  desc: 'Reference implementation of Mistral AI 7B v0.1 model. Highly efficient, open-weight language model demonstrating superior performance metrics across benchmarks.',
-  stars: '34,210',
-  tags: ['Python', 'LLM', 'Transformers'],
-  url: 'https://github.com/mistralai/mistral-inference',
-};
-
-const LANGUAGES = ['Any', 'Python', 'Rust', 'C++'];
+import { FeedCard } from '@/components/feed/FeedCard';
+import { searchFeed, type FeedItem, type SearchParams } from '@/services/feedService';
 
 export default function GitHubPage() {
-  useDocumentTitle('GitHub Trending — AI News Notifier');
-  const [langFilter, setLangFilter] = useState('Any');
-  const [showAll, setShowAll] = useState(false);
+  useDocumentTitle('GitHub & Open Source — AI News Notifier');
+  const [items, setItems] = useState<FeedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const filtered = langFilter === 'Any'
-    ? ALL_REPOS
-    : ALL_REPOS.filter((r) => r.lang === langFilter);
+  const loadRepos = useCallback(async (params: SearchParams = {}, append = false) => {
+    if (!append) setLoading(true);
+    setError('');
+    try {
+      const result = await searchFeed({
+        category: 'open_source',
+        sort: 'highest_importance',
+        limit: 20,
+        ...params,
+      });
+      if (result.success && result.data) {
+        setItems((prev) => append ? [...prev, ...result.data!.items] : result.data!.items);
+        setHasMore(result.data.pagination.has_more);
+        setTotalCount(result.data.pagination.total);
+      }
+    } catch {
+      setError('Failed to load open source articles.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const displayed = showAll ? filtered : filtered.slice(0, 3);
+  useEffect(() => {
+    loadRepos();
+  }, [loadRepos]);
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    loadRepos(searchQuery.trim() ? { q: searchQuery.trim() } : {});
+  }
+
+  const topItem = !loading && items.length > 0 ? items[0] : null;
+  const restItems = !loading && items.length > 1 ? items.slice(1) : [];
 
   return (
-    <div className="p-8 lg:p-12 max-w-7xl mx-auto w-full">
-      <div className="mb-12 border-b-2 border-primary pb-6 flex justify-between items-end">
-        <div>
-          <h1 className="text-6xl font-bold tracking-tight text-primary">Trending Repositories</h1>
-          <p className="text-body-lg text-on-surface-variant mt-2 max-w-2xl">High-impact artificial intelligence projects gaining traction in the developer community.</p>
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline">
+        <div className="px-4 py-2.5">
+          <h2 className="text-xl font-bold text-on-surface">GitHub & Open Source</h2>
+          <p className="text-[13px] text-on-surface-variant mt-0.5">AI open source projects, releases, and repository updates</p>
         </div>
-        <div className="flex gap-4">
-          <select
-            value={langFilter}
-            onChange={(e) => { setLangFilter(e.target.value); setShowAll(false); }}
-            className="bg-surface-container border border-outline rounded text-label-md font-medium py-2 px-4 focus:ring-primary focus:border-primary"
-          >
-            {LANGUAGES.map((l) => (
-              <option key={l} value={l}>Language: {l}</option>
-            ))}
-          </select>
-        </div>
+        <form onSubmit={handleSearch} className="px-4 pb-3">
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search open source projects..."
+              className="w-full py-2.5 pl-10 pr-4 bg-[var(--c-elevated)] border-none rounded-full text-[15px] text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface transition-all"
+            />
+          </div>
+        </form>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Featured Repo */}
-        <div
-          onClick={() => window.open(FEATURED.url, '_blank')}
-          className="md:col-span-2 border border-primary bg-surface p-6 rounded-lg flex flex-col justify-between hover:bg-surface-container-low transition-colors group relative overflow-hidden cursor-pointer"
-        >
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <span className="material-symbols-outlined text-9xl">memory</span>
-          </div>
-          <div>
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-3xl font-bold text-primary">{FEATURED.name}</h3>
-              <div className="flex items-center gap-2 bg-surface-container-high px-3 py-1 rounded-full text-label-md font-medium">
-                <span className="material-symbols-outlined text-sm">star</span><span>{FEATURED.stars}</span>
-              </div>
-            </div>
-            <p className="text-body-lg text-on-surface-variant mb-6 relative z-10 w-4/5">{FEATURED.desc}</p>
-            <div className="flex gap-2 mb-6">
-              {FEATURED.tags.map((t) => <span key={t} className="bg-surface-container px-3 py-1 rounded text-label-md font-medium border border-outline-variant">{t}</span>)}
-            </div>
-          </div>
-          <div className="flex justify-between items-center border-t border-outline-variant pt-4 relative z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm">M</div>
-              <span className="text-label-md font-medium font-semibold">Built by Mistral AI</span>
-            </div>
-            <span className="flex items-center gap-2 text-primary font-bold font-medium">
-              View Repository <span className="material-symbols-outlined">arrow_forward</span>
-            </span>
-          </div>
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 text-error px-4 py-3 bg-error-container/30">
+          <span className="material-symbols-outlined text-lg">error</span>
+          <span className="text-sm">{error}</span>
+          <button onClick={() => loadRepos()} className="ml-auto text-sm text-primary hover:underline bg-transparent border-none cursor-pointer">Retry</button>
         </div>
+      )}
 
-        {/* Analysis */}
-        <div className="border border-primary bg-primary text-on-primary p-6 rounded-lg flex flex-col justify-between">
-          <div>
-            <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined">troubleshoot</span> Trend Analysis
-            </h4>
-            <p className="text-body-md text-on-primary-container mb-4">Our AI indicates a 45% surge in fork activity on local-LLM repositories over the past 72 hours, correlating with new edge-compute hardware announcements.</p>
-            <div className="space-y-3">
-              <div className="bg-primary-container p-3 rounded border border-outline-variant/30">
-                <div className="text-label-md font-medium text-on-primary-container mb-1">Momentum Score</div>
-                <div className="flex items-end gap-2"><span className="text-2xl font-bold">94.2</span><span className="text-label-md text-tertiary-fixed-dim">/ 100</span></div>
-              </div>
-              <div className="bg-primary-container p-3 rounded border border-outline-variant/30">
-                <div className="text-label-md font-medium text-on-primary-container mb-1">Dominant Language</div>
-                <div className="text-xl font-bold">RUST <span className="text-sm font-body text-on-primary-container">+12%</span></div>
+      {/* Loading */}
+      {loading && (
+        <div className="flex flex-col">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="px-4 py-3 border-b border-outline animate-pulse">
+              <div className="flex gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--c-elevated)]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-[var(--c-elevated)] rounded w-1/4" />
+                  <div className="h-4 bg-[var(--c-elevated)] rounded w-3/4" />
+                  <div className="h-3 bg-[var(--c-elevated)] rounded w-full" />
+                </div>
               </div>
             </div>
-          </div>
+          ))}
         </div>
+      )}
 
-        {/* Standard Repos */}
-        {displayed.map((r) => (
-          <div
-            key={r.name}
-            onClick={() => window.open(r.url, '_blank')}
-            className="border border-outline bg-surface p-6 rounded-lg hover:border-primary transition-colors flex flex-col cursor-pointer group"
+      {/* Empty */}
+      {!loading && items.length === 0 && !error && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-4">code</span>
+          <h3 className="text-lg font-bold text-on-surface mb-2">No open source articles found</h3>
+          <p className="text-on-surface-variant text-sm max-w-xs">
+            {searchQuery ? 'Try a different search term.' : 'Open source project updates will appear as collectors run.'}
+          </p>
+        </div>
+      )}
+
+      {/* Featured */}
+      {topItem && (
+        <div className="border-b border-outline">
+          <a
+            href={topItem.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block px-4 py-4 bg-primary/5 hover:bg-primary/10 transition-colors no-underline"
           >
-            <h3 className="text-xl font-bold text-primary mb-2 truncate group-hover:underline">{r.name}</h3>
-            <p className="text-body-md text-on-surface-variant flex-grow mb-4">{r.desc}</p>
-            <div className="flex justify-between items-center mt-auto">
-              <span className="text-label-md font-medium text-secondary flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-secondary inline-block" /> {r.lang}</span>
-              <div className="flex items-center gap-1 text-label-md font-medium"><span className="material-symbols-outlined text-sm">star</span> {r.stars}</div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-0.5 bg-primary text-on-primary text-[11px] font-bold rounded-full">FEATURED</span>
+              <span className="text-[13px] text-on-surface-variant">{topItem.organization}</span>
+              {topItem.importance_score > 0 && (
+                <span className="ml-auto text-[13px] font-medium text-primary">{topItem.importance_score}% relevance</span>
+              )}
             </div>
-          </div>
+            <h3 className="text-[17px] font-bold text-on-surface leading-snug mb-1">{topItem.cleaned_title}</h3>
+            <p className="text-[14px] text-on-surface-variant leading-[1.4] line-clamp-3">{topItem.ai_summary}</p>
+            {topItem.ai_tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {topItem.ai_tags.slice(0, 5).map((tag) => (
+                  <span key={tag} className="text-[12px] text-primary bg-primary/5 px-2 py-0.5 rounded-full">{tag}</span>
+                ))}
+              </div>
+            )}
+          </a>
+        </div>
+      )}
+
+      {/* Stats */}
+      {!loading && items.length > 0 && (
+        <div className="px-4 py-2 border-b border-outline text-[13px] text-on-surface-variant flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-sm">code</span>
+          {totalCount} open source article{totalCount !== 1 ? 's' : ''}
+        </div>
+      )}
+
+      {/* Feed */}
+      <div className="flex flex-col page-transition">
+        {restItems.map((item) => (
+          <FeedCard key={item.id} item={item} showScore score={item.importance_score} />
         ))}
       </div>
 
-      {/* Load More */}
-      {!showAll && filtered.length > 3 && (
-        <div className="mt-12 text-center">
-          <button
-            onClick={() => setShowAll(true)}
-            className="border-2 border-primary text-primary font-bold px-8 py-3 rounded hover:bg-primary hover:text-on-primary transition-colors inline-flex items-center gap-2 bg-transparent cursor-pointer"
-          >
-            Load More Data <span className="material-symbols-outlined">expand_more</span>
-          </button>
-        </div>
-      )}
-      {showAll && (
-        <div className="mt-12 text-center">
-          <p className="text-on-surface-variant font-body text-sm">All repositories loaded.</p>
-        </div>
+      {/* Load more */}
+      {hasMore && !loading && (
+        <button
+          onClick={() => loadRepos({ q: searchQuery.trim() || undefined, offset: items.length }, true)}
+          className="w-full py-4 text-center text-primary font-semibold text-[15px] hover:bg-[var(--c-raised)] transition-colors bg-transparent border-none border-t border-outline cursor-pointer"
+        >
+          Show more
+        </button>
       )}
     </div>
   );

@@ -29,7 +29,8 @@ class RSSCollector(BaseCollector):
     async def fetch(self, source: CollectorSource) -> list[RawItem]:
         """Download and parse the RSS/Atom feed, returning raw entries."""
         async with httpx.AsyncClient(
-            timeout=settings.COLLECTOR_REQUEST_TIMEOUT
+            timeout=settings.COLLECTOR_REQUEST_TIMEOUT,
+            follow_redirects=True,
         ) as client:
             response = await client.get(source.url)
             response.raise_for_status()
