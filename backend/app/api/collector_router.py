@@ -16,6 +16,7 @@ from app.repositories.collector_source_repository import CollectorSourceReposito
 from app.repositories.event_repository import EventRepository
 from app.schemas.collector_source import (
     CollectorSourceCreate,
+    CollectorSourceHealth,
     CollectorSourceRead,
 )
 from app.schemas.event import EventSummary
@@ -123,3 +124,33 @@ async def list_events(
             "offset": offset,
         }
     )
+
+
+# ── Source Health ────────────────────────────────────────────────────────
+
+
+@router.get("/health", response_model=None)
+async def source_health(db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """Return per-source health status for monitoring."""
+    repo = CollectorSourceRepository(db)
+    sources = await repo.list_all()
+
+    health_data: list[dict] = []
+    for src in sources:
+        # Compute status
+        if not src.is_active:
+            status = "inactive"
+        elif src.consecutive_failures >= 5:
+            status = "failing"
+        elif src.consecutive_failures >= 2:
+            status = "degraded"
+        elif src.last_collected_at is not None:
+            status = "healthy"
+        else:
+            status = "pending"
+
+        h = CollectorSourceHealth.model_validate(src)
+        h.status = status
+        health_data.append(h.model_dump())
+
+    return success_response(data=health_data)

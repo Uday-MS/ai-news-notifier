@@ -52,6 +52,15 @@ class EventRepository:
         )
         return (result.scalar() or 0) > 0
 
+    async def exists_by_source_url(self, source_url: str) -> bool:
+        """Return True if an event with the given source URL already exists."""
+        result = await self._db.execute(
+            select(func.count()).select_from(CollectedEvent).where(
+                CollectedEvent.source_url == source_url
+            )
+        )
+        return (result.scalar() or 0) > 0
+
     async def list_events(
         self,
         *,

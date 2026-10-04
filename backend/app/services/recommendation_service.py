@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logging import get_logger
 from app.models.user import User
 from app.models.user_preference import UserPreference
+from app.models.saved_article import SavedArticle
 from app.repositories.feed_repository import FeedRepository
 from app.schemas.feed import FeedItem, PaginationMeta
 from app.schemas.recommendation import (
@@ -52,6 +53,12 @@ class ScoringWeights:
     freshness_half_life_hours: float = 12.0
     trending_max: float = 10.0
     diversity_penalty: float = -15.0
+    # Phase 3: LLM intelligence-aware scoring
+    technology_match: float = 20.0
+    organization_match: float = 15.0
+    keyword_match: float = 15.0
+    confidence_boost_max: float = 5.0
+    saved_behavior_max: float = 10.0
 
 
 # ── Scoring Engine ───────────────────────────────────────────────────────
@@ -67,6 +74,11 @@ class ScoringEngine:
     4. Trending Bonus — tag/category overlap with trending
     5. Diversity Penalty — penalizes consecutive same-category
     6. Mute Filter — excludes muted categories/sources
+    7. Technology Match — user tech preferences vs LLM entities
+    8. Organization Match — user org preferences vs event orgs
+    9. Keyword/Interest Match — user interests vs LLM keywords
+    10. Confidence Boost — LLM confidence contributes
+    11. Saved Behavior — boost categories the user saves
     """
 
     def __init__(self, weights: ScoringWeights | None = None) -> None:
@@ -80,6 +92,10 @@ class ScoringEngine:
         preferred_sources: list[str] | None = None,
         muted_categories: list[str] | None = None,
         muted_sources: list[str] | None = None,
+        preferred_technologies: list[str] | None = None,
+        preferred_organizations: list[str] | None = None,
+        user_interests: list[str] | None = None,
+        saved_categories: list[str] | None = None,
         trending_tags: set[str] | None = None,
         trending_categories: set[str] | None = None,
         seen_categories: list[str] | None = None,
@@ -122,7 +138,30 @@ class ScoringEngine:
         div_score, div_factor = self._diversity_penalty(event, seen_categories)
         factors.append(div_factor)
 
-        total = pref_score + imp_score + fresh_score + trend_score + div_score
+        # Stage 6: Technology match (Phase 3)
+        tech_score, tech_factor = self._technology_match(event, preferred_technologies)
+        factors.append(tech_factor)
+
+        # Stage 7: Organization match (Phase 3)
+        org_score, org_factor = self._organization_match(event, preferred_organizations)
+        factors.append(org_factor)
+
+        # Stage 8: Keyword/Interest match (Phase 3)
+        kw_score, kw_factor = self._keyword_interest_match(event, user_interests)
+        factors.append(kw_factor)
+
+        # Stage 9: Confidence boost (Phase 3)
+        conf_score, conf_factor = self._confidence_boost(event)
+        factors.append(conf_factor)
+
+        # Stage 10: Saved behavior signal (Phase 3)
+        saved_score, saved_factor = self._saved_behavior_signal(event, saved_categories)
+        factors.append(saved_factor)
+
+        total = (
+            pref_score + imp_score + fresh_score + trend_score + div_score
+            + tech_score + org_score + kw_score + conf_score + saved_score
+        )
         total = round(max(0.0, total), 2)
 
         return total, factors
@@ -297,6 +336,175 @@ class ScoringEngine:
             reason=f"Category '{category}' seen {count}x → {penalty:.1f} penalty.",
         )
 
+    # ── Phase 3: New Scoring Stages ──────────────────────────────────────
+
+    def _technology_match(
+        self,
+        event: dict[str, Any],
+        preferred_technologies: list[str] | None,
+    ) -> tuple[float, ScoreFactor]:
+        """Match user's preferred technologies against LLM-extracted entities."""
+        if not preferred_technologies:
+            return 0.0, ScoreFactor(
+                factor="technology", score=0.0, reason="No technology preferences set."
+            )
+
+        pref_lower = {t.lower() for t in preferred_technologies}
+
+        # Collect event technologies from LLM entities + keywords + ai_tags
+        event_techs: set[str] = set()
+        llm_entities = event.get("llm_entities", {})
+        if isinstance(llm_entities, dict):
+            for tech in llm_entities.get("technologies", []):
+                event_techs.add(str(tech).lower())
+            for model in llm_entities.get("models", []):
+                event_techs.add(str(model).lower())
+        for kw in event.get("llm_keywords", []):
+            event_techs.add(str(kw).lower())
+        for tag in event.get("ai_tags", []):
+            event_techs.add(str(tag).lower())
+
+        matches = pref_lower & event_techs
+        if not matches:
+            return 0.0, ScoreFactor(
+                factor="technology", score=0.0, reason="No technology match."
+            )
+
+        # Scale: 1 match = 50%, 2 = 75%, 3+ = 100% of max
+        ratio = min(len(matches) / 2.0, 1.0)
+        score = round(self.w.technology_match * ratio, 2)
+        matched_str = ", ".join(sorted(matches)[:3])
+
+        return score, ScoreFactor(
+            factor="technology",
+            score=score,
+            reason=f"Matches your interest in {matched_str}.",
+        )
+
+    def _organization_match(
+        self,
+        event: dict[str, Any],
+        preferred_organizations: list[str] | None,
+    ) -> tuple[float, ScoreFactor]:
+        """Match user's preferred organizations against event data."""
+        if not preferred_organizations:
+            return 0.0, ScoreFactor(
+                factor="organization", score=0.0, reason="No organization preferences set."
+            )
+
+        pref_lower = {o.lower() for o in preferred_organizations}
+
+        # Collect event organizations from the joined field + LLM entities
+        event_orgs: set[str] = set()
+        org = event.get("organization", "")
+        if org:
+            event_orgs.add(org.lower())
+        llm_entities = event.get("llm_entities", {})
+        if isinstance(llm_entities, dict):
+            for o in llm_entities.get("organizations", []):
+                event_orgs.add(str(o).lower())
+
+        matches = pref_lower & event_orgs
+        if not matches:
+            return 0.0, ScoreFactor(
+                factor="organization", score=0.0, reason="No organization match."
+            )
+
+        score = self.w.organization_match
+        matched_str = ", ".join(sorted(matches)[:3])
+
+        return score, ScoreFactor(
+            factor="organization",
+            score=score,
+            reason=f"Relevant to {matched_str}.",
+        )
+
+    def _keyword_interest_match(
+        self,
+        event: dict[str, Any],
+        user_interests: list[str] | None,
+    ) -> tuple[float, ScoreFactor]:
+        """Match user's onboarding interests against LLM keywords + tags."""
+        if not user_interests:
+            return 0.0, ScoreFactor(
+                factor="interest", score=0.0, reason="No interest profile."
+            )
+
+        interest_lower = {i.lower() for i in user_interests}
+
+        # Collect event keywords from LLM keywords + ai_tags
+        event_keywords: set[str] = set()
+        for kw in event.get("llm_keywords", []):
+            event_keywords.add(str(kw).lower())
+        for tag in event.get("ai_tags", []):
+            event_keywords.add(str(tag).lower())
+
+        # Also check against title words for basic matching
+        title_words = set(event.get("cleaned_title", "").lower().split())
+        event_keywords.update(title_words)
+
+        matches = interest_lower & event_keywords
+        if not matches:
+            return 0.0, ScoreFactor(
+                factor="interest", score=0.0, reason="No interest match."
+            )
+
+        ratio = min(len(matches) / 2.0, 1.0)
+        score = round(self.w.keyword_match * ratio, 2)
+        matched_str = ", ".join(sorted(matches)[:3])
+
+        return score, ScoreFactor(
+            factor="interest",
+            score=score,
+            reason=f"Matches your interest in {matched_str}.",
+        )
+
+    def _confidence_boost(
+        self, event: dict[str, Any]
+    ) -> tuple[float, ScoreFactor]:
+        """Small boost for events with high LLM confidence."""
+        confidence = event.get("confidence_score")
+        if confidence is None or not isinstance(confidence, (int, float)):
+            return 0.0, ScoreFactor(
+                factor="confidence", score=0.0, reason="No LLM confidence data."
+            )
+
+        score = round(confidence * self.w.confidence_boost_max, 2)
+        return score, ScoreFactor(
+            factor="confidence",
+            score=score,
+            reason=f"LLM confidence {confidence:.0%} → {score:.1f} points.",
+        )
+
+    def _saved_behavior_signal(
+        self,
+        event: dict[str, Any],
+        saved_categories: list[str] | None,
+    ) -> tuple[float, ScoreFactor]:
+        """Boost events in categories the user frequently saves."""
+        if not saved_categories:
+            return 0.0, ScoreFactor(
+                factor="saved_behavior", score=0.0, reason="No saved article data."
+            )
+
+        category = self._get_category_str(event)
+        count = sum(1 for c in saved_categories if c.lower() == category)
+
+        if count == 0:
+            return 0.0, ScoreFactor(
+                factor="saved_behavior", score=0.0, reason="No saved articles in this category."
+            )
+
+        # Scale: 1 save = 33%, 2 = 67%, 3+ = 100%
+        ratio = min(count / 3.0, 1.0)
+        score = round(self.w.saved_behavior_max * ratio, 2)
+
+        return score, ScoreFactor(
+            factor="saved_behavior",
+            score=score,
+            reason=f"You've saved {count} article(s) in '{category}'.",
+        )
+
     # ── Helpers ──────────────────────────────────────────────────────────
 
     @staticmethod
@@ -325,6 +533,8 @@ class PreferenceService:
                 preferred_sources=[],
                 muted_categories=[],
                 muted_sources=[],
+                preferred_technologies=[],
+                preferred_organizations=[],
             )
         return UserPreferenceResponse.model_validate(pref)
 
@@ -336,6 +546,8 @@ class PreferenceService:
         preferred_sources: list[str] | None = None,
         muted_categories: list[str] | None = None,
         muted_sources: list[str] | None = None,
+        preferred_technologies: list[str] | None = None,
+        preferred_organizations: list[str] | None = None,
     ) -> UserPreferenceResponse:
         """Upsert user preferences."""
         pref = await self._get_or_none(user_id)
@@ -347,6 +559,8 @@ class PreferenceService:
                 preferred_sources=preferred_sources or [],
                 muted_categories=muted_categories or [],
                 muted_sources=muted_sources or [],
+                preferred_technologies=preferred_technologies or [],
+                preferred_organizations=preferred_organizations or [],
             )
             self._db.add(pref)
         else:
@@ -358,6 +572,10 @@ class PreferenceService:
                 pref.muted_categories = muted_categories
             if muted_sources is not None:
                 pref.muted_sources = muted_sources
+            if preferred_technologies is not None:
+                pref.preferred_technologies = preferred_technologies
+            if preferred_organizations is not None:
+                pref.preferred_organizations = preferred_organizations
 
         await self._db.flush()
         await self._db.refresh(pref)
@@ -376,7 +594,7 @@ class PreferenceService:
 class RecommendationService:
     """Generates personalized and general recommendation feeds.
 
-    Injects FeedRepository (Sprint 5) for candidate selection and
+    Injects FeedRepository for candidate selection and
     TrendingService for trending data. No duplicate SQL.
     """
 
@@ -401,6 +619,25 @@ class RecommendationService:
         """Generate a personalized feed for an authenticated user."""
         prefs = await self._pref_service.get_preferences(user.id)
 
+        # Build effective preference profile from explicit prefs + onboarding
+        user_interests = self._extract_user_interests(user)
+        effective_techs = list(prefs.preferred_technologies) if prefs.preferred_technologies else []
+        effective_orgs = list(prefs.preferred_organizations) if prefs.preferred_organizations else []
+        effective_cats = list(prefs.preferred_categories) if prefs.preferred_categories else []
+
+        # Enrich from onboarding interests if explicit prefs are sparse
+        if user_interests:
+            interest_cats, interest_techs, interest_orgs = self._map_interests_to_preferences(user_interests)
+            if not effective_cats:
+                effective_cats = interest_cats
+            if not effective_techs:
+                effective_techs = interest_techs
+            if not effective_orgs:
+                effective_orgs = interest_orgs
+
+        # Get saved article behavior signal
+        saved_categories = await self._get_saved_categories(user.id)
+
         # Fetch a larger candidate pool for scoring + diversity
         pool_size = max(limit * 3, 60)
         candidates = await self._feed_repo.search(limit=pool_size, offset=0)
@@ -412,10 +649,14 @@ class RecommendationService:
         # Score and rank
         scored = self._score_candidates(
             candidates,
-            preferred_categories=prefs.preferred_categories,
+            preferred_categories=effective_cats,
             preferred_sources=prefs.preferred_sources,
             muted_categories=prefs.muted_categories,
             muted_sources=prefs.muted_sources,
+            preferred_technologies=effective_techs,
+            preferred_organizations=effective_orgs,
+            user_interests=user_interests,
+            saved_categories=saved_categories,
             trending_tags=trending_tags,
             trending_categories=trending_categories,
         )
@@ -475,6 +716,8 @@ class RecommendationService:
             return None
 
         prefs = await self._pref_service.get_preferences(user.id)
+        user_interests = self._extract_user_interests(user)
+        saved_categories = await self._get_saved_categories(user.id)
         trending_tags, trending_categories = await self._get_trending_sets()
 
         total, factors = self._engine.score_event(
@@ -483,6 +726,10 @@ class RecommendationService:
             preferred_sources=prefs.preferred_sources,
             muted_categories=prefs.muted_categories,
             muted_sources=prefs.muted_sources,
+            preferred_technologies=prefs.preferred_technologies,
+            preferred_organizations=prefs.preferred_organizations,
+            user_interests=user_interests,
+            saved_categories=saved_categories,
             trending_tags=trending_tags,
             trending_categories=trending_categories,
         )
@@ -504,6 +751,10 @@ class RecommendationService:
         preferred_sources: list[str] | None = None,
         muted_categories: list[str] | None = None,
         muted_sources: list[str] | None = None,
+        preferred_technologies: list[str] | None = None,
+        preferred_organizations: list[str] | None = None,
+        user_interests: list[str] | None = None,
+        saved_categories: list[str] | None = None,
         trending_tags: set[str] | None = None,
         trending_categories: set[str] | None = None,
     ) -> list[RecommendationItem]:
@@ -521,6 +772,10 @@ class RecommendationService:
                 preferred_sources=preferred_sources,
                 muted_categories=muted_categories,
                 muted_sources=muted_sources,
+                preferred_technologies=preferred_technologies,
+                preferred_organizations=preferred_organizations,
+                user_interests=user_interests,
+                saved_categories=saved_categories,
                 trending_tags=trending_tags,
                 trending_categories=trending_categories,
                 now=now,
@@ -564,6 +819,11 @@ class RecommendationService:
                 organization=candidate["organization"],
                 published_at=candidate["published_at"],
                 processed_at=candidate["processed_at"],
+                # LLM intelligence fields (Phase 3)
+                why_it_matters=candidate.get("why_it_matters"),
+                llm_summary=candidate.get("llm_summary"),
+                intelligence_type=candidate.get("intelligence_type"),
+                confidence_score=candidate.get("confidence_score"),
                 # Recommendation fields
                 recommendation_score=final_score,
                 recommendation_reasons=reasons,
@@ -576,6 +836,81 @@ class RecommendationService:
 
         return results
 
+    @staticmethod
+    def _extract_user_interests(user: User) -> list[str]:
+        """Extract interest strings from the User's relationship."""
+        if not hasattr(user, "interests") or not user.interests:
+            return []
+        return [i.interest for i in user.interests]
+
+    @staticmethod
+    def _map_interests_to_preferences(
+        interests: list[str],
+    ) -> tuple[list[str], list[str], list[str]]:
+        """Map raw interest strings into category/tech/org preferences.
+
+        This provides cold-start personalization from onboarding data.
+        """
+        # Known category keywords
+        category_map = {
+            "ai models": "ai_model", "llms": "ai_model", "large language models": "ai_model",
+            "ai research": "ai_research", "research": "ai_research",
+            "open source": "open_source", "open-source": "open_source",
+            "security": "security", "cybersecurity": "security",
+            "startups": "startup", "startup": "startup",
+            "funding": "funding", "investment": "funding",
+            "hackathons": "hackathon", "hackathon": "hackathon",
+            "internships": "internship", "internship": "internship",
+            "competitions": "competition", "competition": "competition",
+        }
+        # Known orgs
+        known_orgs = {
+            "google", "openai", "anthropic", "meta", "microsoft", "nvidia",
+            "deepmind", "google deepmind", "hugging face", "stability ai",
+            "mistral", "cohere", "amazon", "apple", "tesla",
+        }
+        # Known techs
+        known_techs = {
+            "pytorch", "tensorflow", "transformers", "gemini", "gpt",
+            "claude", "llama", "stable diffusion", "langchain", "cuda",
+            "jax", "whisper", "midjourney", "copilot", "diffusion",
+        }
+
+        cats: list[str] = []
+        techs: list[str] = []
+        orgs: list[str] = []
+
+        for interest in interests:
+            il = interest.lower().strip()
+            if il in category_map:
+                cats.append(category_map[il])
+            if il in known_orgs:
+                orgs.append(interest)
+            if il in known_techs:
+                techs.append(interest)
+
+        return cats, techs, orgs
+
+    async def _get_saved_categories(self, user_id: uuid.UUID) -> list[str]:
+        """Fetch categories of articles the user has saved."""
+        try:
+            from app.models.processed_event import ProcessedEvent
+            stmt = (
+                select(ProcessedEvent.ai_category)
+                .join(
+                    SavedArticle,
+                    SavedArticle.processed_event_id == ProcessedEvent.id,
+                )
+                .where(SavedArticle.user_id == user_id)
+            )
+            result = await self._db.execute(stmt)
+            return [
+                row[0].value if hasattr(row[0], "value") else str(row[0])
+                for row in result.all()
+            ]
+        except Exception:
+            return []
+
     async def _get_trending_sets(self) -> tuple[set[str], set[str]]:
         """Fetch trending tags and categories as sets for fast lookup."""
         try:
@@ -585,3 +920,4 @@ class RecommendationService:
             return tags, categories
         except Exception:
             return set(), set()
+

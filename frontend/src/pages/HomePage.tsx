@@ -1,3 +1,7 @@
+/**
+ * HomePage — Intelligence feed with For You / Latest tabs.
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { FeedCard } from '@/components/feed/FeedCard';
@@ -8,7 +12,7 @@ import { cn } from '@/utils/cn';
 type Tab = 'for-you' | 'latest';
 
 export default function HomePage() {
-  useDocumentTitle('Home — AI News Notifier');
+  useDocumentTitle('Home — NexusAI');
 
   const [activeTab, setActiveTab] = useState<Tab>('for-you');
   const [forYouItems, setForYouItems] = useState<RecommendationItem[]>([]);
@@ -50,11 +54,8 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'for-you') {
-      loadForYou(0);
-    } else {
-      loadLatest(0);
-    }
+    if (activeTab === 'for-you') loadForYou(0);
+    else loadLatest(0);
   }, [activeTab, loadForYou, loadLatest]);
 
   function handleLoadMore() {
@@ -67,44 +68,35 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Sticky Tab Header */}
-      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline">
+      {/* Tab Header */}
+      <div className="sticky top-0 z-10 bg-surface/90 backdrop-blur-md border-b border-outline-variant">
         <div className="flex">
-          <button
-            onClick={() => setActiveTab('for-you')}
-            className={cn(
-              'flex-1 py-3.5 text-center text-[15px] font-body font-bold hover:bg-surface-container transition-colors bg-transparent border-none cursor-pointer relative',
-              activeTab === 'for-you' ? 'text-on-surface' : 'text-on-surface-variant'
-            )}
-          >
-            For You
-            {activeTab === 'for-you' && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('latest')}
-            className={cn(
-              'flex-1 py-3.5 text-center text-[15px] font-body hover:bg-surface-container transition-colors bg-transparent border-none cursor-pointer relative',
-              activeTab === 'latest' ? 'text-on-surface font-bold' : 'text-on-surface-variant'
-            )}
-          >
-            Latest
-            {activeTab === 'latest' && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />
-            )}
-          </button>
+          {(['for-you', 'latest'] as Tab[]).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'flex-1 py-3 text-center text-[13px] font-body font-medium hover:bg-[var(--c-elevated)] transition-colors bg-transparent border-none cursor-pointer relative tracking-tight',
+                activeTab === tab ? 'text-on-surface' : 'text-on-surface-variant'
+              )}
+            >
+              {tab === 'for-you' ? 'For You' : 'Latest'}
+              {activeTab === tab && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[2px] bg-primary rounded-full" />
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 text-error p-4 bg-error-container/30">
-          <span className="material-symbols-outlined text-lg">error</span>
-          <span className="font-body text-sm">{error}</span>
+        <div className="flex items-center gap-2 text-[var(--c-danger)] px-4 py-3 bg-[var(--c-danger-dim)] border-b border-outline-variant">
+          <span className="material-symbols-outlined text-base">error</span>
+          <span className="font-body text-[13px]">{error}</span>
           <button
             onClick={() => activeTab === 'for-you' ? loadForYou(0) : loadLatest(0)}
-            className="ml-auto text-sm font-body text-primary hover:underline bg-transparent border-none cursor-pointer"
+            className="ml-auto text-[12px] font-mono text-primary uppercase tracking-wider hover:underline bg-transparent border-none cursor-pointer"
           >
             Retry
           </button>
@@ -115,15 +107,18 @@ export default function HomePage() {
       {loading && items.length === 0 && (
         <div className="flex flex-col">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="px-4 py-4 border-b border-outline animate-pulse">
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-surface-container" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 bg-surface-container rounded w-1/3" />
-                  <div className="h-4 bg-surface-container rounded w-3/4" />
-                  <div className="h-3 bg-surface-container rounded w-full" />
-                  <div className="h-3 bg-surface-container rounded w-2/3" />
-                </div>
+            <div key={i} className="px-4 py-4 border-b border-outline-variant">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded bg-[var(--c-elevated)] skeleton-shimmer" />
+                <div className="h-3 bg-[var(--c-elevated)] rounded w-24 skeleton-shimmer" />
+                <div className="h-3 bg-[var(--c-elevated)] rounded w-8 ml-auto skeleton-shimmer" />
+              </div>
+              <div className="h-4 bg-[var(--c-elevated)] rounded w-4/5 skeleton-shimmer mb-2" />
+              <div className="h-3 bg-[var(--c-elevated)] rounded w-full skeleton-shimmer mb-1" />
+              <div className="h-3 bg-[var(--c-elevated)] rounded w-2/3 skeleton-shimmer" />
+              <div className="flex gap-1 mt-3">
+                <div className="h-5 w-12 bg-[var(--c-elevated)] rounded skeleton-shimmer" />
+                <div className="h-5 w-16 bg-[var(--c-elevated)] rounded skeleton-shimmer" />
               </div>
             </div>
           ))}
@@ -132,17 +127,19 @@ export default function HomePage() {
 
       {/* Empty state */}
       {!loading && items.length === 0 && !error && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-4">
-            {activeTab === 'for-you' ? 'auto_awesome' : 'newspaper'}
-          </span>
-          <h3 className="text-lg font-bold text-on-surface mb-2">
-            {activeTab === 'for-you' ? 'No recommendations yet' : 'No news yet'}
+        <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+          <div className="w-12 h-12 rounded bg-[var(--c-elevated)] flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-2xl text-[var(--c-text-3)]">
+              {activeTab === 'for-you' ? 'auto_awesome' : 'newspaper'}
+            </span>
+          </div>
+          <h3 className="font-headline font-semibold text-[16px] text-on-surface mb-1.5 tracking-tight">
+            {activeTab === 'for-you' ? 'No recommendations yet' : 'No intelligence yet'}
           </h3>
-          <p className="text-on-surface-variant font-body text-sm max-w-xs">
+          <p className="text-[var(--c-text-2)] font-body text-[13px] max-w-xs leading-relaxed">
             {activeTab === 'for-you'
-              ? 'Your personalized feed will populate as AI news is collected and processed.'
-              : 'News articles will appear here once the collectors run.'}
+              ? 'Your personalized feed will populate as intelligence is collected and processed.'
+              : 'Intelligence articles will appear here once the collectors run.'}
           </p>
         </div>
       )}
@@ -156,6 +153,7 @@ export default function HomePage() {
             showScore={activeTab === 'for-you'}
             score={activeTab === 'for-you' ? (item as RecommendationItem).recommendation_score : undefined}
             reasons={activeTab === 'for-you' ? (item as RecommendationItem).recommendation_reasons : undefined}
+            whyItMatters={activeTab === 'for-you' ? (item as RecommendationItem).why_it_matters : undefined}
           />
         ))}
       </div>
@@ -164,9 +162,9 @@ export default function HomePage() {
       {hasMore && !loading && (
         <button
           onClick={handleLoadMore}
-          className="w-full py-4 text-center text-primary font-body font-bold text-sm hover:bg-surface-container transition-colors bg-transparent border-none border-t border-outline cursor-pointer"
+          className="w-full py-3.5 text-center text-primary font-mono text-[12px] font-medium uppercase tracking-wider hover:bg-[var(--c-elevated)] transition-colors bg-transparent border-none border-t border-outline-variant cursor-pointer"
         >
-          Load more
+          Load more intelligence →
         </button>
       )}
 

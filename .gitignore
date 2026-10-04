@@ -47,3 +47,26 @@ logs/
 # Misc
 *.swp
 *.swo
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Frontend
+node_modules/
+dist/
+.vite/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

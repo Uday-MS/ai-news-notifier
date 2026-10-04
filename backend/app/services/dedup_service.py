@@ -31,5 +31,9 @@ class DeduplicationService:
         return hashlib.sha256(raw.encode()).hexdigest()
 
     async def is_duplicate(self, event: EventCreate) -> bool:
-        """Check whether an event with the same content hash exists."""
-        return await self._event_repo.exists_by_hash(event.content_hash)
+        """Check whether an event with the same content hash or source URL exists."""
+        if await self._event_repo.exists_by_hash(event.content_hash):
+            return True
+        if event.source_url and await self._event_repo.exists_by_source_url(event.source_url):
+            return True
+        return False

@@ -86,6 +86,37 @@ class ResetPasswordRequest(BaseModel):
 
 
 class VerifyEmailRequest(BaseModel):
-    """Email verification payload."""
+    """Email verification payload (legacy token-based)."""
 
     token: str
+
+
+# ── Phase 4: OTP Verification ───────────────────────────────────────────
+
+
+class OTPVerifyRequest(BaseModel):
+    """Verify email with OTP code."""
+
+    email: EmailStr
+    otp_code: str
+
+    @field_validator("otp_code")
+    @classmethod
+    def validate_otp_format(cls, v: str) -> str:
+        v = v.strip()
+        if not v.isdigit() or len(v) != 6:
+            raise ValueError("OTP must be a 6-digit code.")
+        return v
+
+
+class OTPResendRequest(BaseModel):
+    """Request to resend OTP."""
+
+    email: EmailStr
+
+
+class GoogleCallbackRequest(BaseModel):
+    """Google OAuth callback with authorization code."""
+
+    code: str
+    state: str | None = None

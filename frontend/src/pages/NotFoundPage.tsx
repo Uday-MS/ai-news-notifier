@@ -2,21 +2,18 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Link } from 'react-router-dom';
 
 export default function NotFoundPage() {
-  useDocumentTitle('404 — Platinum Mist');
+  useDocumentTitle('404 — NexusAI');
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-primary">404</h1>
-        <h2 className="mt-4 text-xl font-bold text-primary">Page not found</h2>
-        <p className="mt-2 text-sm text-on-surface-variant font-body">
+        <span className="font-mono text-[72px] font-bold text-primary leading-none tracking-tighter">404</span>
+        <h2 className="mt-3 font-headline font-semibold text-[18px] text-on-surface tracking-tight">Page not found</h2>
+        <p className="mt-2 text-[13px] text-[var(--c-text-2)] font-body">
           The page you're looking for doesn't exist or has been moved.
         </p>
         <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center bg-primary px-6 py-3 text-sm font-bold text-on-primary hover:bg-primary-container transition-colors no-underline"
-          >
+          <Link to="/" className="btn-primary inline-flex py-2.5 px-6 text-[14px] no-underline">
             Go Home
           </Link>
         </div>

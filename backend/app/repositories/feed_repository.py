@@ -304,4 +304,14 @@ class FeedRepository:
             "source_url": row[2],
             "organization": row[3],
             "published_at": row[4],
+            # LLM Intelligence (Phase 2)
+            "why_it_matters": pe.why_it_matters,
+            "llm_summary": pe.llm_summary,
+            "llm_category": pe.llm_category,
+            "llm_keywords": pe.llm_keywords or [],
+            "llm_entities": pe.llm_entities or {},
+            "intelligence_type": pe.intelligence_type,
+            "confidence_score": pe.confidence_score,
+            "llm_status": pe.llm_status,
         }
+

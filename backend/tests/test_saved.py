@@ -16,16 +16,28 @@ from app.models.processed_event import ProcessedEvent, AICategory, ProcessingSta
 # ── Helpers ──────────────────────────────────────────────────────────────
 
 
-async def _login(client: AsyncClient) -> dict:
-    """Register + login and return auth headers."""
-    await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "saved@test.com",
-            "password": "StrongP@ss1",
-            "full_name": "Saved User",
-        },
-    )
+async def _login(client: AsyncClient, db: AsyncSession | None = None) -> dict:
+    """Create a verified user + login and return auth headers.
+
+    Phase 4 requires email verification before login, so we create
+    the user directly in the DB as verified.
+    """
+    from app.core.security import hash_password
+    from app.models.user import User, UserRole
+
+    if db is not None:
+        # Create verified user directly in DB
+        user = User(
+            email="saved@test.com",
+            hashed_password=hash_password("StrongP@ss1"),
+            full_name="Saved User",
+            role=UserRole.USER,
+            is_active=True,
+            is_verified=True,
+        )
+        db.add(user)
+        await db.commit()
+
     resp = await client.post(
         "/api/v1/auth/login",
         json={"email": "saved@test.com", "password": "StrongP@ss1"},
@@ -81,7 +93,7 @@ class TestSavedArticlesAPI:
     """Test saved articles CRUD endpoints."""
 
     async def test_save_article(self, client: AsyncClient, db_session: AsyncSession):
-        headers = await _login(client)
+        headers = await _login(client, db_session)
         event_id = await _create_article(db_session)
 
         resp = await client.post(f"/api/v1/saved/{event_id}", headers=headers)
@@ -93,7 +105,7 @@ class TestSavedArticlesAPI:
     async def test_save_duplicate_is_idempotent(
         self, client: AsyncClient, db_session: AsyncSession
     ):
-        headers = await _login(client)
+        headers = await _login(client, db_session)
         event_id = await _create_article(db_session)
 
         await client.post(f"/api/v1/saved/{event_id}", headers=headers)
@@ -102,7 +114,7 @@ class TestSavedArticlesAPI:
         assert resp.json()["success"] is True
 
     async def test_list_saved(self, client: AsyncClient, db_session: AsyncSession):
-        headers = await _login(client)
+        headers = await _login(client, db_session)
         e1 = await _create_article(db_session)
         e2 = await _create_article(db_session)
 
@@ -117,7 +129,7 @@ class TestSavedArticlesAPI:
         assert data["data"]["pagination"]["total"] == 2
 
     async def test_check_saved(self, client: AsyncClient, db_session: AsyncSession):
-        headers = await _login(client)
+        headers = await _login(client, db_session)
         event_id = await _create_article(db_session)
 
         # Not saved yet
@@ -132,7 +144,7 @@ class TestSavedArticlesAPI:
         assert resp.json()["data"]["is_saved"] is True
 
     async def test_unsave_article(self, client: AsyncClient, db_session: AsyncSession):
-        headers = await _login(client)
+        headers = await _login(client, db_session)
         event_id = await _create_article(db_session)
 
         await client.post(f"/api/v1/saved/{event_id}", headers=headers)
@@ -147,13 +159,13 @@ class TestSavedArticlesAPI:
     async def test_unsave_nonexistent(
         self, client: AsyncClient, db_session: AsyncSession
     ):
-        headers = await _login(client)
+        headers = await _login(client, db_session)
         fake_id = uuid.uuid4()
         resp = await client.delete(f"/api/v1/saved/{fake_id}", headers=headers)
         assert resp.json()["success"] is False
 
     async def test_list_empty(self, client: AsyncClient, db_session: AsyncSession):
-        headers = await _login(client)
+        headers = await _login(client, db_session)
         resp = await client.get("/api/v1/saved", headers=headers)
         assert resp.status_code == 200
         data = resp.json()

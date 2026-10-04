@@ -68,7 +68,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 async def _background_pipeline_loop() -> None:
-    """Run collect → process → notify every 30 minutes in the background."""
+    """Run collect → process → notify in the background.
+
+    Checks every 10 minutes for sources whose collection interval has elapsed,
+    respecting per-source ``collection_interval_minutes`` configuration.
+    """
     import asyncio
     from app.services.collector_service import CollectorService
     from app.services.pipeline.pipeline_service import PipelineService
@@ -76,7 +80,7 @@ async def _background_pipeline_loop() -> None:
     from app.models.user import User
     from sqlalchemy import select
 
-    INTERVAL = 30 * 60  # 30 minutes
+    CHECK_INTERVAL = 10 * 60  # Check every 10 minutes
 
     # Wait 10s after startup before first run to let the server fully start
     await asyncio.sleep(10)
@@ -85,37 +89,61 @@ async def _background_pipeline_loop() -> None:
         logger.info("Background pipeline: starting cycle")
         try:
             async with async_session_factory() as db:
-                # Step 1: Collect
+                # Step 1: Collect only due sources (interval-aware)
                 collector_svc = CollectorService(db)
-                results = await collector_svc.run_all_active()
+                results = await collector_svc.run_due_sources()
                 await db.commit()
                 total_emitted = sum(r.get("emitted", 0) for r in results)
                 total_errors = sum(r.get("errors", 0) for r in results)
 
-            async with async_session_factory() as db:
-                # Step 2: Process
-                pipeline_svc = PipelineService(db)
-                proc_result = await pipeline_svc.process_all_unprocessed()
-                await db.commit()
+            # Only process and notify if we collected something
+            proc_result: dict = {"processed": 0}
+            total_notifs = 0
+            enrichment_result: dict = {"enriched": 0}
 
-            async with async_session_factory() as db:
-                # Step 3: Notify
-                stmt = select(User).where(User.onboarding_completed == True)  # noqa: E712
-                user_result = await db.execute(stmt)
-                users = list(user_result.scalars().all())
-                notif_svc = NotificationService(db)
-                total_notifs = 0
-                for user in users:
-                    gen = await notif_svc.generate_for_user(user, min_score=20.0, max_count=10)
-                    total_notifs += gen.generated
-                await db.commit()
+            if total_emitted > 0 or results:
+                async with async_session_factory() as db:
+                    # Step 2: Process
+                    pipeline_svc = PipelineService(db)
+                    proc_result = await pipeline_svc.process_all_unprocessed()
+                    await db.commit()
+
+                # Step 2.5: LLM Intelligence Enrichment (if configured)
+                try:
+                    from app.ai.llm_provider import get_llm_provider
+                    from app.ai.intelligence_service import IntelligenceService
+
+                    provider = get_llm_provider()
+                    if provider is not None:
+                        async with async_session_factory() as db:
+                            intel_svc = IntelligenceService(db, provider)
+                            enrichment_result = await intel_svc.enrich_pending(limit=20)
+                            await db.commit()
+                except Exception as exc:
+                    logger.warning(
+                        "Background LLM enrichment failed (non-fatal)",
+                        exc_info=exc,
+                    )
+
+                async with async_session_factory() as db:
+                    # Step 3: Notify
+                    stmt = select(User).where(User.onboarding_completed == True)  # noqa: E712
+                    user_result = await db.execute(stmt)
+                    users = list(user_result.scalars().all())
+                    notif_svc = NotificationService(db)
+                    for user in users:
+                        gen = await notif_svc.generate_for_user(user, min_score=20.0, max_count=10)
+                        total_notifs += gen.generated
+                    await db.commit()
 
             logger.info(
                 "Background pipeline: cycle complete",
                 extra={"context": {
+                    "sources_run": len(results),
                     "collected": total_emitted,
                     "collect_errors": total_errors,
                     "processed": proc_result.get("processed", 0),
+                    "enriched": enrichment_result.get("enriched", 0),
                     "notifications": total_notifs,
                 }},
             )
@@ -125,7 +153,7 @@ async def _background_pipeline_loop() -> None:
                 exc_info=exc,
             )
 
-        await asyncio.sleep(INTERVAL)
+        await asyncio.sleep(CHECK_INTERVAL)
 
 
 app = FastAPI(
@@ -146,6 +174,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Rate Limiting (Phase 4) ─────────────────────────────────────────────
+
+from app.middleware.rate_limiter import RateLimitMiddleware  # noqa: E402
+
+app.add_middleware(RateLimitMiddleware)
 
 # ── Exception Handlers ──────────────────────────────────────────────────
 

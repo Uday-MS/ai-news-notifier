@@ -1,6 +1,5 @@
 /**
- * TopStories — shows the most important/highest-scoring stories from the backend.
- * Replaces the old mock SuggestedOrganizations widget.
+ * TopStories — Most important intelligence from the backend.
  */
 
 import type { FeedItem } from '@/services/feedService';
@@ -25,8 +24,10 @@ export function TopStories({ stories }: TopStoriesProps) {
   if (stories.length === 0) return null;
 
   return (
-    <div className="bg-[var(--c-raised)] rounded-2xl overflow-hidden">
-      <h3 className="font-bold text-xl text-on-surface px-4 pt-3 pb-2">Top Stories</h3>
+    <div className="card-intel overflow-hidden">
+      <div className="px-3 pt-3 pb-2 border-b border-outline-variant">
+        <h3 className="type-mono-label text-[var(--c-text-3)]">Top Stories</h3>
+      </div>
       <div className="flex flex-col">
         {stories.slice(0, 4).map((story) => (
           <a
@@ -34,23 +35,26 @@ export function TopStories({ stories }: TopStoriesProps) {
             href={story.source_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex gap-3 items-start px-4 py-2.5 hover:bg-[var(--c-elevated)] transition-colors cursor-pointer no-underline"
+            className="flex gap-2.5 items-start px-3 py-2.5 hover:bg-[var(--c-elevated)] transition-colors cursor-pointer no-underline"
           >
-            <div className="w-8 h-8 shrink-0 rounded-full bg-[var(--c-elevated)] flex items-center justify-center mt-0.5">
-              <span className="text-on-surface-variant font-bold text-xs">
-                {story.organization.slice(0, 2).toUpperCase()}
-              </span>
-            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[14px] text-on-surface leading-[1.3] font-medium line-clamp-2">
+              <p className="font-headline font-medium text-[13px] text-on-surface leading-[1.35] line-clamp-2 tracking-tight">
                 {story.cleaned_title}
               </p>
-              <p className="text-[12px] text-on-surface-variant mt-0.5">
-                {story.organization} · {timeAgo(story.published_at)}
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="font-mono text-[10px] text-[var(--c-text-3)] uppercase tracking-wider">
+                  {story.source}
+                </span>
+                <span className="text-[var(--c-text-4)]">·</span>
+                <span className="font-mono text-[10px] text-[var(--c-text-3)] tabular-nums">
+                  {timeAgo(story.published_at)}
+                </span>
                 {story.importance_score > 0 && (
-                  <span className="ml-1 text-primary">⚡ {story.importance_score}</span>
+                  <span className="badge badge-primary ml-auto !h-[16px] !text-[8px]">
+                    IMP {story.importance_score}
+                  </span>
                 )}
-              </p>
+              </div>
             </div>
           </a>
         ))}

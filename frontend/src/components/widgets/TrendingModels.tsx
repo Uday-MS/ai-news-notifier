@@ -1,6 +1,5 @@
 /**
- * TopCategories — shows real category breakdown from the backend.
- * Replaces the old mock TrendingModels widget.
+ * TopCategories — Intelligence category breakdown from backend.
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -34,35 +33,37 @@ export function TopCategories({ categories }: TopCategoriesProps) {
   if (categories.length === 0) return null;
 
   return (
-    <div className="bg-[var(--c-raised)] rounded-2xl overflow-hidden">
-      <h3 className="font-bold text-xl text-on-surface px-4 pt-3 pb-2">Top Categories</h3>
+    <div className="card-intel overflow-hidden">
+      <div className="px-3 pt-3 pb-2 border-b border-outline-variant">
+        <h3 className="type-mono-label text-[var(--c-text-3)]">Categories</h3>
+      </div>
       <div className="flex flex-col">
         {categories.slice(0, 5).map((cat) => (
           <button
             key={cat.category}
             onClick={() => navigate(`/news?category=${encodeURIComponent(cat.category)}`)}
-            className="flex items-center gap-3 px-4 py-2.5 hover:bg-[var(--c-elevated)] transition-colors cursor-pointer bg-transparent border-none text-left w-full"
+            className="flex items-center gap-2.5 px-3 py-2 hover:bg-[var(--c-elevated)] transition-colors cursor-pointer bg-transparent border-none text-left w-full"
           >
-            <span className="material-symbols-outlined text-on-surface-variant text-lg">
+            <span className="material-symbols-outlined text-[var(--c-text-3)] text-base">
               {categoryIcon(cat.category)}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-[15px] text-on-surface leading-5 capitalize">
+              <p className="font-headline font-medium text-[13px] text-on-surface leading-5 capitalize tracking-tight">
                 {cat.category.replace(/_/g, ' ')}
               </p>
-              <p className="text-[13px] text-on-surface-variant leading-4">
-                {cat.count} article{cat.count !== 1 ? 's' : ''}
-              </p>
             </div>
+            <span className="font-mono text-[11px] text-[var(--c-text-3)] tabular-nums">
+              {cat.count}
+            </span>
           </button>
         ))}
       </div>
       {categories.length > 5 && (
         <button
           onClick={() => navigate('/news')}
-          className="w-full px-4 py-3 text-left text-primary text-[15px] hover:bg-[var(--c-elevated)] transition-colors bg-transparent border-none cursor-pointer"
+          className="w-full px-3 py-2.5 text-left text-primary text-[13px] font-medium hover:bg-[var(--c-elevated)] transition-colors bg-transparent border-none cursor-pointer border-t border-outline-variant"
         >
-          Show more
+          All categories →
         </button>
       )}
     </div>

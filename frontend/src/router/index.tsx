@@ -21,6 +21,8 @@ const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
+const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmailPage'));
+const GoogleCallbackPage = lazy(() => import('@/pages/GoogleCallbackPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const OnboardingPage = lazy(() => import('@/pages/OnboardingPage'));
 
@@ -112,10 +114,16 @@ export const router = createBrowserRouter([
         children: [
           { path: '/login', element: <PageSuspense><LoginPage /></PageSuspense> },
           { path: '/register', element: <PageSuspense><RegisterPage /></PageSuspense> },
+          { path: '/verify-email', element: <PageSuspense><VerifyEmailPage /></PageSuspense> },
           { path: '/forgot-password', element: <PageSuspense><ForgotPasswordPage /></PageSuspense> },
           { path: '/reset-password', element: <PageSuspense><ResetPasswordPage /></PageSuspense> },
         ],
       },
     ],
+  },
+  {
+    // Google OAuth callback — no layout, handles redirect
+    path: '/auth/google/callback',
+    element: <PageSuspense><GoogleCallbackPage /></PageSuspense>,
   },
 ]);

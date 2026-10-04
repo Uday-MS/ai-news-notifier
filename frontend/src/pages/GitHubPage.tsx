@@ -4,7 +4,7 @@ import { FeedCard } from '@/components/feed/FeedCard';
 import { searchFeed, type FeedItem, type SearchParams } from '@/services/feedService';
 
 export default function GitHubPage() {
-  useDocumentTitle('GitHub & Open Source — AI News Notifier');
+  useDocumentTitle('Open Source — NexusAI');
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -16,27 +16,17 @@ export default function GitHubPage() {
     if (!append) setLoading(true);
     setError('');
     try {
-      const result = await searchFeed({
-        category: 'open_source',
-        sort: 'highest_importance',
-        limit: 20,
-        ...params,
-      });
+      const result = await searchFeed({ category: 'open_source', sort: 'highest_importance', limit: 20, ...params });
       if (result.success && result.data) {
         setItems((prev) => append ? [...prev, ...result.data!.items] : result.data!.items);
         setHasMore(result.data.pagination.has_more);
         setTotalCount(result.data.pagination.total);
       }
-    } catch {
-      setError('Failed to load open source articles.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError('Failed to load open source intelligence.'); }
+    finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    loadRepos();
-  }, [loadRepos]);
+  useEffect(() => { loadRepos(); }, [loadRepos]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -48,115 +38,78 @@ export default function GitHubPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline">
-        <div className="px-4 py-2.5">
-          <h2 className="text-xl font-bold text-on-surface">GitHub & Open Source</h2>
-          <p className="text-[13px] text-on-surface-variant mt-0.5">AI open source projects, releases, and repository updates</p>
+      <div className="sticky top-0 z-10 bg-surface/90 backdrop-blur-md border-b border-outline-variant">
+        <div className="px-4 py-2.5 flex items-center justify-between">
+          <h2 className="font-headline font-semibold text-[16px] text-on-surface tracking-tight">Open Source</h2>
+          {!loading && totalCount > 0 && <span className="badge badge-neutral">{totalCount}</span>}
         </div>
-        <form onSubmit={handleSearch} className="px-4 pb-3">
+        <form onSubmit={handleSearch} className="px-4 pb-2.5">
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search open source projects..."
-              className="w-full py-2.5 pl-10 pr-4 bg-[var(--c-elevated)] border-none rounded-full text-[15px] text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface transition-all"
-            />
+            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--c-text-3)] text-base">search</span>
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search projects..."
+              className="w-full py-2 pl-9 pr-3 bg-[var(--c-elevated)] border border-[var(--c-border-subtle)] rounded text-[13px] text-on-surface placeholder:text-[var(--c-text-3)] focus:outline-none focus:border-primary transition-colors font-body" />
           </div>
         </form>
       </div>
 
-      {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 text-error px-4 py-3 bg-error-container/30">
-          <span className="material-symbols-outlined text-lg">error</span>
-          <span className="text-sm">{error}</span>
-          <button onClick={() => loadRepos()} className="ml-auto text-sm text-primary hover:underline bg-transparent border-none cursor-pointer">Retry</button>
+        <div className="flex items-center gap-2 text-[var(--c-danger)] px-4 py-3 bg-[var(--c-danger-dim)] border-b border-outline-variant">
+          <span className="material-symbols-outlined text-base">error</span>
+          <span className="text-[13px] font-body">{error}</span>
+          <button onClick={() => loadRepos()} className="ml-auto text-[12px] font-mono text-primary uppercase tracking-wider hover:underline bg-transparent border-none cursor-pointer">Retry</button>
         </div>
       )}
 
-      {/* Loading */}
       {loading && (
         <div className="flex flex-col">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="px-4 py-3 border-b border-outline animate-pulse">
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-[var(--c-elevated)]" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 bg-[var(--c-elevated)] rounded w-1/4" />
-                  <div className="h-4 bg-[var(--c-elevated)] rounded w-3/4" />
-                  <div className="h-3 bg-[var(--c-elevated)] rounded w-full" />
-                </div>
-              </div>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="px-4 py-4 border-b border-outline-variant">
+              <div className="flex items-center gap-2 mb-3"><div className="w-7 h-7 rounded bg-[var(--c-elevated)] skeleton-shimmer" /><div className="h-3 bg-[var(--c-elevated)] rounded w-24 skeleton-shimmer" /></div>
+              <div className="h-4 bg-[var(--c-elevated)] rounded w-4/5 skeleton-shimmer mb-2" />
+              <div className="h-3 bg-[var(--c-elevated)] rounded w-full skeleton-shimmer" />
             </div>
           ))}
         </div>
       )}
 
-      {/* Empty */}
       {!loading && items.length === 0 && !error && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-4">code</span>
-          <h3 className="text-lg font-bold text-on-surface mb-2">No open source articles found</h3>
-          <p className="text-on-surface-variant text-sm max-w-xs">
-            {searchQuery ? 'Try a different search term.' : 'Open source project updates will appear as collectors run.'}
-          </p>
+        <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+          <div className="w-12 h-12 rounded bg-[var(--c-elevated)] flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-2xl text-[var(--c-text-3)]">code</span>
+          </div>
+          <h3 className="font-headline font-semibold text-[16px] text-on-surface mb-1.5 tracking-tight">No projects found</h3>
+          <p className="text-[var(--c-text-2)] text-[13px] max-w-xs font-body">{searchQuery ? 'Try a different search.' : 'Open source updates will appear as collectors run.'}</p>
         </div>
       )}
 
-      {/* Featured */}
       {topItem && (
-        <div className="border-b border-outline">
-          <a
-            href={topItem.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block px-4 py-4 bg-primary/5 hover:bg-primary/10 transition-colors no-underline"
-          >
+        <div className="border-b border-outline-variant">
+          <a href={topItem.source_url} target="_blank" rel="noopener noreferrer"
+            className="block px-4 py-4 bg-[var(--c-accent-dim)] hover:bg-[var(--c-accent-glow)] transition-colors no-underline">
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-0.5 bg-primary text-on-primary text-[11px] font-bold rounded-full">FEATURED</span>
-              <span className="text-[13px] text-on-surface-variant">{topItem.organization}</span>
-              {topItem.importance_score > 0 && (
-                <span className="ml-auto text-[13px] font-medium text-primary">{topItem.importance_score}% relevance</span>
-              )}
+              <span className="badge badge-primary">Featured</span>
+              <span className="font-mono text-[10px] text-[var(--c-text-3)] uppercase tracking-wider">{topItem.organization}</span>
+              {topItem.importance_score > 0 && <span className="badge badge-primary ml-auto">IMP {topItem.importance_score}</span>}
             </div>
-            <h3 className="text-[17px] font-bold text-on-surface leading-snug mb-1">{topItem.cleaned_title}</h3>
-            <p className="text-[14px] text-on-surface-variant leading-[1.4] line-clamp-3">{topItem.ai_summary}</p>
+            <h3 className="font-headline font-semibold text-[15px] text-on-surface leading-snug mb-1.5 tracking-tight">{topItem.cleaned_title}</h3>
+            <p className="text-[13px] text-[var(--c-text-2)] leading-[1.45] line-clamp-3 font-body">{topItem.ai_summary}</p>
             {topItem.ai_tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
-                {topItem.ai_tags.slice(0, 5).map((tag) => (
-                  <span key={tag} className="text-[12px] text-primary bg-primary/5 px-2 py-0.5 rounded-full">{tag}</span>
-                ))}
+                {topItem.ai_tags.slice(0, 5).map((tag) => <span key={tag} className="badge badge-neutral !text-[9px]">{tag}</span>)}
               </div>
             )}
           </a>
         </div>
       )}
 
-      {/* Stats */}
-      {!loading && items.length > 0 && (
-        <div className="px-4 py-2 border-b border-outline text-[13px] text-on-surface-variant flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-sm">code</span>
-          {totalCount} open source article{totalCount !== 1 ? 's' : ''}
-        </div>
-      )}
-
-      {/* Feed */}
       <div className="flex flex-col page-transition">
-        {restItems.map((item) => (
-          <FeedCard key={item.id} item={item} showScore score={item.importance_score} />
-        ))}
+        {restItems.map((item) => <FeedCard key={item.id} item={item} showScore score={item.importance_score} />)}
       </div>
 
-      {/* Load more */}
       {hasMore && !loading && (
-        <button
-          onClick={() => loadRepos({ q: searchQuery.trim() || undefined, offset: items.length }, true)}
-          className="w-full py-4 text-center text-primary font-semibold text-[15px] hover:bg-[var(--c-raised)] transition-colors bg-transparent border-none border-t border-outline cursor-pointer"
-        >
-          Show more
+        <button onClick={() => loadRepos({ q: searchQuery.trim() || undefined, offset: items.length }, true)}
+          className="w-full py-3.5 text-center text-primary font-mono text-[12px] font-medium uppercase tracking-wider hover:bg-[var(--c-elevated)] transition-colors bg-transparent border-none border-t border-outline-variant cursor-pointer">
+          Load more →
         </button>
       )}
     </div>

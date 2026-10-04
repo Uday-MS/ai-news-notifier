@@ -47,11 +47,30 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
 
+    # ── Email Provider (Resend) ──────────────────────────────────────────
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = "AI News <noreply@resend.dev>"
+
+    # ── Frontend ─────────────────────────────────────────────────────────
+    FRONTEND_URL: str = "http://localhost:5173"
+
     # ── Collector Engine ─────────────────────────────────────────────────
     COLLECTOR_LOG_LEVEL: str = "INFO"
     GITHUB_API_TOKEN: str = ""
     COLLECTOR_REQUEST_TIMEOUT: int = 30
     COLLECTOR_MAX_ITEMS_PER_RUN: int = 100
+    COLLECTOR_MAX_RETRIES: int = 3
+    COLLECTOR_RETRY_BACKOFF_BASE: float = 1.0
+
+    # ── LLM Intelligence ────────────────────────────────────────────────
+    GEMINI_API_KEY: str = ""
+    LLM_PROVIDER: str = "gemini"
+    LLM_MODEL: str = "gemini-3.6-flash"
+    LLM_MAX_RETRIES: int = 3
+    LLM_RETRY_BACKOFF_BASE: float = 2.0
+    LLM_REQUEST_TIMEOUT: int = 30
+    LLM_MAX_TOKENS: int = 2048
+    INTELLIGENCE_PROMPT_VERSION: str = "1.0"
 
     @property
     def is_production(self) -> bool:

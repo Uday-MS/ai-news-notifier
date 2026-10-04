@@ -1,6 +1,7 @@
 /* ==========================================================================
-   AI NEWS NOTIFIER — Main Stylesheet
-   Tailwind CSS v4 + Dual Theme Design System
+   NEXUS AI — Intelligence Platform Design System
+   Tailwind CSS v4 + Precision Intelligence Interface
+   Design Source: Stitch "NexusAI Intelligence Feed"
    ========================================================================== */
 
 @import "tailwindcss";
@@ -9,87 +10,160 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ==========================================================================
-   CSS CUSTOM PROPERTIES — Light / Dark Themes
+   CSS CUSTOM PROPERTIES — Dark-First Intelligence Palette
    ========================================================================== */
 
+/* ── DARK (Default — Intelligence Terminal) ──────────────────────────────── */
 :root {
-  /* Backgrounds */
-  --c-base: #ffffff;
-  --c-raised: #f7f9f9;
-  --c-elevated: #eff3f4;
-  --c-overlay: #e7e9ea;
+  /* Surfaces — Obsidian carbon layering */
+  --c-base: #0f131c;
+  --c-raised: #181c24;
+  --c-elevated: #1c2028;
+  --c-overlay: #262a33;
+  --c-highest: #31353e;
 
-  /* Borders */
-  --c-border: #eff3f4;
-  --c-border-strong: #cfd9de;
+  /* Borders — 1px hairline structuralism */
+  --c-border: #3a494b;
+  --c-border-strong: #849495;
+  --c-border-subtle: #1e293b;
 
-  /* Text */
-  --c-text-1: #0f1419;
-  --c-text-2: #536471;
-  --c-text-3: #8b98a5;
+  /* Text — Titanium white hierarchy */
+  --c-text-1: #dfe2ee;
+  --c-text-2: #b9cacb;
+  --c-text-3: #849495;
+  --c-text-4: #475569;
 
-  /* Accent — used sparingly for primary actions, links, selected nav */
-  --c-accent: #1d9bf0;
-  --c-accent-hover: #1a8cd8;
-  --c-accent-text: #ffffff;
-  --c-accent-dim: #e8f5fd;
+  /* Primary Signal — Electric Cyan */
+  --c-accent: #00f2fe;
+  --c-accent-hover: #38f9d7;
+  --c-accent-text: #00373a;
+  --c-accent-dim: rgba(0, 242, 254, 0.08);
+  --c-accent-glow: rgba(0, 242, 254, 0.12);
+
+  /* Secondary — Deep Indigo */
+  --c-secondary: #6366f1;
+  --c-secondary-dim: rgba(99, 102, 241, 0.08);
+
+  /* Tertiary — Emerald */
+  --c-tertiary: #10b981;
+  --c-tertiary-dim: rgba(16, 185, 129, 0.08);
 
   /* Semantic */
-  --c-danger: #f4212e;
-  --c-danger-dim: #fde8ea;
-  --c-success: #00ba7c;
-  --c-warning: #ffad1f;
+  --c-danger: #f43f5e;
+  --c-danger-dim: rgba(244, 63, 94, 0.08);
+  --c-success: #10b981;
+  --c-warning: #f59e0b;
+  --c-warning-dim: rgba(245, 158, 11, 0.08);
 
   /* Inverse */
-  --c-inverse: #0f1419;
-  --c-inverse-text: #e7e9ea;
+  --c-inverse: #dfe2ee;
+  --c-inverse-text: #0f131c;
 
   /* Focus ring */
-  --c-focus-ring: rgba(29, 155, 240, 0.5);
+  --c-focus-ring: rgba(0, 242, 254, 0.4);
+
+  color-scheme: dark;
 }
 
-.dark {
-  --c-base: #000000;
-  --c-raised: #16181c;
-  --c-elevated: #1d1f23;
-  --c-overlay: #2f3336;
+/* ── LIGHT — Clean Intelligence ──────────────────────────────────────────── */
+:root:not(.dark) {
+  --c-base: #f8fafc;
+  --c-raised: #ffffff;
+  --c-elevated: #f1f5f9;
+  --c-overlay: #e2e8f0;
+  --c-highest: #cbd5e1;
 
-  --c-border: #2f3336;
-  --c-border-strong: #3e4144;
+  --c-border: #e2e8f0;
+  --c-border-strong: #94a3b8;
+  --c-border-subtle: #f1f5f9;
 
-  --c-text-1: #e7e9ea;
-  --c-text-2: #71767b;
-  --c-text-3: #536471;
+  --c-text-1: #0f172a;
+  --c-text-2: #475569;
+  --c-text-3: #94a3b8;
+  --c-text-4: #cbd5e1;
 
-  --c-accent: #1d9bf0;
-  --c-accent-hover: #1a8cd8;
+  --c-accent: #0891b2;
+  --c-accent-hover: #0e7490;
   --c-accent-text: #ffffff;
-  --c-accent-dim: #031018;
+  --c-accent-dim: rgba(8, 145, 178, 0.06);
+  --c-accent-glow: rgba(8, 145, 178, 0.1);
 
-  --c-danger: #f4212e;
-  --c-danger-dim: #2d0607;
-  --c-success: #00ba7c;
-  --c-warning: #ffad1f;
+  --c-secondary: #6366f1;
+  --c-secondary-dim: rgba(99, 102, 241, 0.06);
 
-  --c-inverse: #e7e9ea;
-  --c-inverse-text: #0f1419;
+  --c-tertiary: #059669;
+  --c-tertiary-dim: rgba(5, 150, 105, 0.06);
 
-  --c-focus-ring: rgba(29, 155, 240, 0.4);
+  --c-danger: #e11d48;
+  --c-danger-dim: rgba(225, 29, 72, 0.06);
+  --c-success: #059669;
+  --c-warning: #d97706;
+  --c-warning-dim: rgba(217, 119, 6, 0.06);
+
+  --c-inverse: #0f172a;
+  --c-inverse-text: #f8fafc;
+
+  --c-focus-ring: rgba(8, 145, 178, 0.4);
+
+  color-scheme: light;
+}
+
+/* Force dark when .dark class present */
+.dark {
+  --c-base: #0f131c;
+  --c-raised: #181c24;
+  --c-elevated: #1c2028;
+  --c-overlay: #262a33;
+  --c-highest: #31353e;
+
+  --c-border: #3a494b;
+  --c-border-strong: #849495;
+  --c-border-subtle: #1e293b;
+
+  --c-text-1: #dfe2ee;
+  --c-text-2: #b9cacb;
+  --c-text-3: #849495;
+  --c-text-4: #475569;
+
+  --c-accent: #00f2fe;
+  --c-accent-hover: #38f9d7;
+  --c-accent-text: #00373a;
+  --c-accent-dim: rgba(0, 242, 254, 0.08);
+  --c-accent-glow: rgba(0, 242, 254, 0.12);
+
+  --c-secondary: #6366f1;
+  --c-secondary-dim: rgba(99, 102, 241, 0.08);
+
+  --c-tertiary: #10b981;
+  --c-tertiary-dim: rgba(16, 185, 129, 0.08);
+
+  --c-danger: #f43f5e;
+  --c-danger-dim: rgba(244, 63, 94, 0.08);
+  --c-success: #10b981;
+  --c-warning: #f59e0b;
+  --c-warning-dim: rgba(245, 158, 11, 0.08);
+
+  --c-inverse: #dfe2ee;
+  --c-inverse-text: #0f131c;
+
+  --c-focus-ring: rgba(0, 242, 254, 0.4);
+
+  color-scheme: dark;
 }
 
 /* ==========================================================================
-   THEME — Design Tokens mapped to CSS Custom Properties
+   THEME — Design Tokens mapped to Tailwind
    ========================================================================== */
 
 @theme {
-  /* ── Fonts — Clean, readable system-first stack ─────────────────────── */
-  --font-headline: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-label: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* ── Fonts — Triple-engine typographic system ──────────────────────── */
+  --font-headline: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-label: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* ── Material 3 Tokens → Dynamic CSS Vars ──────────────────────────── */
+  /* ── Color Tokens ─────────────────────────────────────────────────── */
   --color-primary: var(--c-accent);
   --color-on-primary: var(--c-accent-text);
   --color-primary-container: var(--c-accent-dim);
@@ -100,34 +174,30 @@
   --color-on-primary-fixed-variant: var(--c-accent);
   --color-inverse-primary: var(--c-accent);
 
-  --color-secondary: var(--c-text-2);
-  --color-on-secondary: var(--c-accent-text);
-  --color-secondary-container: var(--c-elevated);
-  --color-on-secondary-container: var(--c-text-2);
-  --color-secondary-fixed: var(--c-elevated);
-  --color-secondary-fixed-dim: var(--c-text-2);
-  --color-on-secondary-fixed: var(--c-text-1);
-  --color-on-secondary-fixed-variant: var(--c-text-2);
+  --color-secondary: var(--c-secondary);
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: var(--c-secondary-dim);
+  --color-on-secondary-container: var(--c-secondary);
+  --color-secondary-fixed: var(--c-secondary-dim);
+  --color-secondary-fixed-dim: var(--c-secondary);
+  --color-on-secondary-fixed: #ffffff;
+  --color-on-secondary-fixed-variant: var(--c-secondary);
 
-  --color-tertiary: var(--c-text-3);
-  --color-on-tertiary: var(--c-accent-text);
-  --color-tertiary-container: var(--c-overlay);
-  --color-on-tertiary-container: var(--c-text-2);
-  --color-tertiary-fixed: var(--c-overlay);
-  --color-tertiary-fixed-dim: var(--c-text-3);
-  --color-on-tertiary-fixed: var(--c-text-1);
-  --color-on-tertiary-fixed-variant: var(--c-text-2);
+  --color-tertiary: var(--c-tertiary);
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: var(--c-tertiary-dim);
+  --color-on-tertiary-container: var(--c-tertiary);
 
   --color-surface: var(--c-base);
-  --color-surface-bright: var(--c-base);
-  --color-surface-dim: var(--c-overlay);
-  --color-surface-variant: var(--c-elevated);
+  --color-surface-bright: var(--c-highest);
+  --color-surface-dim: var(--c-base);
+  --color-surface-variant: var(--c-overlay);
   --color-surface-tint: var(--c-accent);
   --color-surface-container: var(--c-elevated);
   --color-surface-container-low: var(--c-raised);
   --color-surface-container-lowest: var(--c-base);
   --color-surface-container-high: var(--c-overlay);
-  --color-surface-container-highest: var(--c-border-strong);
+  --color-surface-container-highest: var(--c-highest);
   --color-on-surface: var(--c-text-1);
   --color-on-surface-variant: var(--c-text-2);
 
@@ -135,7 +205,7 @@
   --color-on-background: var(--c-text-1);
 
   --color-outline: var(--c-border);
-  --color-outline-variant: var(--c-border);
+  --color-outline-variant: var(--c-border-subtle);
 
   --color-error: var(--c-danger);
   --color-on-error: #ffffff;
@@ -145,34 +215,34 @@
   --color-inverse-surface: var(--c-inverse);
   --color-inverse-on-surface: var(--c-inverse-text);
 
-  /* ── Typography Scale — Tighter, more readable ─────────────────────── */
+  /* ── Typography Scale — Stitch reference ───────────────────────────── */
   --text-display-lg: 2.25rem;
-  --text-display-lg--line-height: 1.2;
-  --text-display-md: 1.875rem;
-  --text-display-md--line-height: 1.2;
+  --text-display-lg--line-height: 1.22;
+  --text-display-md: 1.75rem;
+  --text-display-md--line-height: 1.21;
   --text-headline-lg: 1.5rem;
-  --text-headline-lg--line-height: 1.25;
-  --text-headline-md: 1.25rem;
-  --text-headline-md--line-height: 1.3;
-  --text-headline-sm: 1.125rem;
-  --text-headline-sm--line-height: 1.35;
-  --text-body-lg: 1.0625rem;
-  --text-body-lg--line-height: 1.5;
-  --text-body-md: 0.9375rem;
-  --text-body-md--line-height: 1.5;
-  --text-body-sm: 0.8125rem;
+  --text-headline-lg--line-height: 1.33;
+  --text-headline-md: 1.125rem;
+  --text-headline-md--line-height: 1.33;
+  --text-headline-sm: 1rem;
+  --text-headline-sm--line-height: 1.375;
+  --text-body-lg: 0.9375rem;
+  --text-body-lg--line-height: 1.47;
+  --text-body-md: 0.8125rem;
+  --text-body-md--line-height: 1.46;
+  --text-body-sm: 0.6875rem;
   --text-body-sm--line-height: 1.45;
-  --text-label-lg: 0.9375rem;
-  --text-label-lg--line-height: 1.4;
-  --text-label-md: 0.8125rem;
-  --text-label-md--line-height: 1.4;
-  --text-label-sm: 0.6875rem;
-  --text-label-sm--line-height: 1.4;
+  --text-label-lg: 0.8125rem;
+  --text-label-lg--line-height: 1.38;
+  --text-label-md: 0.75rem;
+  --text-label-md--line-height: 1.33;
+  --text-label-sm: 0.625rem;
+  --text-label-sm--line-height: 1.2;
 
   /* ── Spacing ───────────────────────────────────────────────────────── */
-  --spacing-gutter: 20px;
-  --spacing-margin-desktop: 48px;
-  --spacing-margin-mobile: 16px;
+  --spacing-gutter: 16px;
+  --spacing-margin-desktop: 24px;
+  --spacing-margin-mobile: 12px;
 }
 
 /* ==========================================================================
@@ -186,13 +256,8 @@
 }
 
 html {
-  color-scheme: light;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
-}
-
-html.dark {
-  color-scheme: dark;
 }
 
 html,
@@ -206,7 +271,7 @@ body {
 body {
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.47;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -270,7 +335,7 @@ a:hover {
 }
 
 /* ==========================================================================
-   SCROLLBAR
+   SCROLLBAR — Minimal track
    ========================================================================== */
 
 ::-webkit-scrollbar {
@@ -283,7 +348,7 @@ a:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--c-border-strong);
+  background: var(--c-border);
   border-radius: 4px;
 }
 
@@ -304,7 +369,7 @@ a:hover {
 }
 
 /* ==========================================================================
-   ANIMATIONS
+   ANIMATIONS — Restrained, purposeful
    ========================================================================== */
 
 .page-transition {
@@ -312,14 +377,8 @@ a:hover {
 }
 
 @keyframes fadeSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeIn {
@@ -363,26 +422,267 @@ a:hover {
 }
 
 /* ==========================================================================
-   INPUT STYLES
+   TYPOGRAPHY — Intelligence Hierarchy
+   ========================================================================== */
+
+.type-display {
+  font-family: var(--font-headline);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 44px;
+  letter-spacing: -0.03em;
+  color: var(--c-text-1);
+}
+
+.type-headline-lg {
+  font-family: var(--font-headline);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+  color: var(--c-text-1);
+}
+
+.type-headline-sm {
+  font-family: var(--font-headline);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  color: var(--c-text-1);
+}
+
+.type-body-lg {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: -0.01em;
+  color: var(--c-text-1);
+}
+
+.type-body-sm {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--c-text-2);
+}
+
+.type-body-xs {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+  color: var(--c-text-3);
+}
+
+.type-mono-metric {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.02em;
+  font-feature-settings: "tnum";
+}
+
+.type-mono-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-feature-settings: "tnum";
+}
+
+.type-mono-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-feature-settings: "tnum";
+}
+
+/* ==========================================================================
+   COMPONENTS — Intelligence Card System
+   ========================================================================== */
+
+.card-intel {
+  background-color: var(--c-raised);
+  border: 1px solid var(--c-border-subtle);
+  border-radius: 4px;
+  transition: border-color 0.15s ease;
+}
+
+.card-intel:hover {
+  border-color: var(--c-border);
+}
+
+.card-intel-active {
+  border-color: var(--c-accent);
+  box-shadow: inset 0 0 0 1px var(--c-accent);
+}
+
+/* ==========================================================================
+   COMPONENTS — Buttons
+   ========================================================================== */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--c-accent);
+  color: var(--c-accent-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--c-accent-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--c-elevated);
+  color: var(--c-text-1);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  border: 1px solid var(--c-border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--c-overlay);
+  border-color: var(--c-border);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: transparent;
+  color: var(--c-text-2);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.btn-ghost:hover {
+  color: var(--c-text-1);
+  background-color: var(--c-accent-dim);
+}
+
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+/* ==========================================================================
+   COMPONENTS — Badges & Tags
+   ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
+.badge-primary {
+  background: var(--c-accent-dim);
+  color: var(--c-accent);
+  border: 1px solid rgba(0, 242, 254, 0.2);
+}
+
+.badge-secondary {
+  background: var(--c-secondary-dim);
+  color: var(--c-secondary);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.badge-tertiary {
+  background: var(--c-tertiary-dim);
+  color: var(--c-tertiary);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge-warning {
+  background: var(--c-warning-dim);
+  color: var(--c-warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-danger {
+  background: var(--c-danger-dim);
+  color: var(--c-danger);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.badge-neutral {
+  background: var(--c-elevated);
+  color: var(--c-text-2);
+  border: 1px solid var(--c-border-subtle);
+}
+
+/* ==========================================================================
+   COMPONENTS — Inputs
    ========================================================================== */
 
 .input-field {
   width: 100%;
   background-color: var(--c-base);
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--c-border-subtle);
   border-radius: 4px;
   color: var(--c-text-1);
   font-family: var(--font-body);
   padding: 0.625rem 0.75rem;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  font-size: 15px;
+  line-height: 1.47;
+  transition: border-color 0.15s ease;
   outline: none;
 }
 
 .input-field:focus {
   border-color: var(--c-accent);
-  box-shadow: 0 0 0 1px var(--c-accent);
 }
 
 .input-field::placeholder {
@@ -392,29 +692,103 @@ a:hover {
 .input-industrial {
   width: 100%;
   background-color: var(--c-base);
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--c-border-subtle);
   color: var(--c-text-1);
   font-family: var(--font-body);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s ease;
 }
 
 .input-industrial:focus {
   outline: none;
   border-color: var(--c-accent);
-  box-shadow: 0 0 0 1px var(--c-accent);
 }
 
 /* ==========================================================================
-   AUTH STYLES
+   COMPONENTS — Navigation
+   ========================================================================== */
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  text-decoration: none;
+  color: var(--c-text-2);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background-color: var(--c-elevated);
+  color: var(--c-text-1);
+  text-decoration: none;
+}
+
+.nav-item.active {
+  color: var(--c-accent);
+  background-color: var(--c-accent-dim);
+}
+
+.nav-item.active .material-symbols-outlined {
+  font-variation-settings: "FILL" 1;
+}
+
+/* Legacy nav-pill compat */
+.nav-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  transition: background-color 0.12s ease;
+  text-decoration: none;
+  color: var(--c-text-2);
+}
+
+.nav-pill:hover {
+  background-color: var(--c-elevated);
+  text-decoration: none;
+  color: var(--c-text-1);
+}
+
+.nav-pill:active {
+  transform: scale(0.97);
+}
+
+.nav-pill.active {
+  color: var(--c-accent);
+  background-color: var(--c-accent-dim);
+}
+
+.nav-pill.active .material-symbols-outlined {
+  font-variation-settings: "FILL" 1;
+}
+
+/* ==========================================================================
+   COMPONENTS — Card hover (legacy compat)
+   ========================================================================== */
+
+.card-hover {
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.card-hover:hover {
+  background-color: var(--c-elevated);
+}
+
+/* ==========================================================================
+   AUTH STYLES — Instrument-grade auth forms
    ========================================================================== */
 
 .auth-input {
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s ease;
 }
 
 .auth-input:focus {
   border-color: var(--c-accent);
-  box-shadow: 0 0 0 1px var(--c-accent);
 }
 
 .login-btn {
@@ -450,7 +824,7 @@ a:hover {
   display: none;
   color: var(--c-danger);
   font-family: var(--font-body);
-  font-size: var(--text-label-md);
+  font-size: 13px;
   margin-top: 0.5rem;
   align-items: center;
   gap: 0.5rem;
@@ -462,7 +836,6 @@ a:hover {
 
 .field-error .auth-input {
   border-color: var(--c-danger);
-  box-shadow: 0 0 0 1px var(--c-danger);
 }
 
 .shake {
@@ -486,7 +859,7 @@ a:hover {
   justify-content: center;
   flex-direction: column;
   z-index: 100;
-  animation: fadeInOverlay 0.3s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .login-success-overlay.visible {
@@ -497,26 +870,14 @@ a:hover {
   font-size: 3rem;
   color: var(--c-success);
   margin-bottom: 1rem;
-  animation: scaleIn 0.3s ease-out 0.1s both;
 }
 
 .login-success-overlay .success-text {
-  color: #ffffff;
+  color: var(--c-text-1);
   font-family: var(--font-headline);
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  animation: scaleIn 0.3s ease-out 0.2s both;
-}
-
-@keyframes fadeInOverlay {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
 }
 
 .remember-me {
@@ -534,60 +895,59 @@ a:hover {
 
 .remember-me label {
   font-family: var(--font-body);
-  font-size: var(--text-label-md);
+  font-size: 13px;
   color: var(--c-text-2);
   cursor: pointer;
   user-select: none;
 }
 
 /* ==========================================================================
-   NAV LINK ACTIVE PILL
+   WHY IT MATTERS — Intelligence callout
    ========================================================================== */
 
-.nav-pill {
+.intel-callout {
+  position: relative;
+  padding: 0.625rem 0.75rem;
+  padding-left: 1rem;
+  background: var(--c-secondary-dim);
+  border-radius: 4px;
+}
+
+.intel-callout::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--c-secondary);
+  border-radius: 2px 0 0 2px;
+}
+
+/* ==========================================================================
+   IMPORTANCE — Segmented indicator
+   ========================================================================== */
+
+.importance-bar {
   display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 0.75rem 0.75rem;
-  border-radius: 9999px;
-  transition: background-color 0.15s ease;
-  text-decoration: none;
-  color: var(--c-text-1);
+  gap: 2px;
 }
 
-.nav-pill:hover {
-  background-color: var(--c-elevated);
-  text-decoration: none;
+.importance-bar .segment {
+  width: 4px;
+  height: 12px;
+  border-radius: 1px;
+  background: var(--c-border-subtle);
 }
 
-.nav-pill:active {
-  transform: scale(0.97);
+.importance-bar .segment.active {
+  background: var(--c-accent);
 }
 
-.nav-pill.active {
-  font-weight: 700;
+.importance-bar.high .segment.active {
+  background: var(--c-danger);
 }
 
-.nav-pill.active .material-symbols-outlined {
-  font-variation-settings: "FILL" 1;
-}
-
-/* ==========================================================================
-   CARD — Shared interactive card hover
-   ========================================================================== */
-
-.card-hover {
-  transition: background-color 0.15s ease;
-}
-
-.card-hover:hover {
-  background-color: var(--c-raised);
-}
-
-/* ==========================================================================
-   BUTTON — Shared interactive button scale
-   ========================================================================== */
-
-.btn-press:active {
-  transform: scale(0.96);
+.importance-bar.medium .segment.active {
+  background: var(--c-warning);
 }

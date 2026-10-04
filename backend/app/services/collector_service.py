@@ -44,11 +44,16 @@ class CollectorService:
             dedup_service=self._dedup,
         )
         result = await collector.run(source)
+        now = datetime.now(timezone.utc)
 
-        # Update last_collected_at timestamp
-        await self._source_repo.update_last_collected(
-            source.id, datetime.now(timezone.utc)
-        )
+        # Update source health based on result
+        if result.errors > 0 and result.emitted == 0 and result.fetched == 0:
+            # Complete failure — record error
+            error_msg = "; ".join(result.error_messages[:3]) if result.error_messages else "Unknown error"
+            await self._source_repo.record_failure(source.id, now, error_msg)
+        else:
+            # At least partial success — record success
+            await self._source_repo.record_success(source.id, now, result.emitted)
 
         return result
 
@@ -67,6 +72,57 @@ class CollectorService:
                     exc_info=exc,
                     extra={"context": {"source": source.name}},
                 )
+                # Record failure in health tracking
+                try:
+                    await self._source_repo.record_failure(
+                        source.id, datetime.now(timezone.utc), str(exc)
+                    )
+                except Exception:
+                    pass  # Don't let health tracking errors cascade
+
+                results.append(
+                    {
+                        "collector_type": source.collector_type,
+                        "source_name": source.name,
+                        "errors": 1,
+                        "error_messages": [str(exc)],
+                    }
+                )
+
+        return results
+
+    async def run_due_sources(self) -> list[dict]:
+        """Run collectors only for sources whose collection interval has elapsed."""
+        now = datetime.now(timezone.utc)
+        sources = await self._source_repo.get_due_sources(now)
+        results: list[dict] = []
+
+        if not sources:
+            logger.info("No sources due for collection")
+            return results
+
+        logger.info(
+            "Running due sources",
+            extra={"context": {"due_count": len(sources)}},
+        )
+
+        for source in sources:
+            try:
+                result = await self.run_collector(source.id)
+                results.append(asdict(result))
+            except Exception as exc:
+                logger.error(
+                    "Failed to run collector for source",
+                    exc_info=exc,
+                    extra={"context": {"source": source.name}},
+                )
+                try:
+                    await self._source_repo.record_failure(
+                        source.id, datetime.now(timezone.utc), str(exc)
+                    )
+                except Exception:
+                    pass
+
                 results.append(
                     {
                         "collector_type": source.collector_type,

@@ -2,17 +2,32 @@
 
 from __future__ import annotations
 
+import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, TypedDict
 
+import httpx
+
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.models.collector_source import CollectorSource
 from app.models.event import CollectedEvent
 from app.repositories.event_repository import EventRepository
 from app.schemas.event import EventCreate
 from app.services.dedup_service import DeduplicationService
+
+
+# ── Exceptions that warrant a retry ──────────────────────────────────────
+
+_RETRYABLE_EXCEPTIONS = (
+    httpx.TimeoutException,
+    httpx.ConnectError,
+    httpx.RemoteProtocolError,
+    ConnectionError,
+    TimeoutError,
+)
 
 
 class RawItem(TypedDict, total=False):
@@ -48,8 +63,8 @@ class BaseCollector(ABC):
     """Abstract collector that every concrete collector must implement.
 
     The ``run()`` method orchestrates the pipeline:
-    ``fetch → normalize → validate → emit`` with structured logging
-    and per-item error isolation.
+    ``fetch → normalize → validate → emit`` with structured logging,
+    per-item error isolation, and bounded retry on transient failures.
     """
 
     collector_type: str = "base"
@@ -90,11 +105,73 @@ class BaseCollector(ABC):
     async def emit(self, event: EventCreate) -> CollectedEvent | None:
         """Persist the event if it is not a duplicate. Returns the saved
         model instance, or *None* if it was deduplicated.
+
+        Also catches database IntegrityError (e.g. duplicate source_url)
+        and treats it as a dedup hit to avoid corrupting the session.
         """
         if await self._dedup.is_duplicate(event):
             return None
 
-        return await self._event_repo.create(**event.model_dump())
+        try:
+            return await self._event_repo.create(**event.model_dump())
+        except Exception as exc:
+            # Handle unique constraint violations gracefully
+            exc_str = str(exc).lower()
+            if "unique" in exc_str or "integrity" in exc_str or "duplicate" in exc_str:
+                # Rollback the failed flush so the session remains usable
+                await self._event_repo._db.rollback()
+                self._log.debug(
+                    "Duplicate caught by DB constraint",
+                    extra={"context": {"title": event.title, "url": event.source_url}},
+                )
+                return None
+            raise
+
+    # ── Fetch with retry ─────────────────────────────────────────────────
+
+    async def _fetch_with_retry(self, source: CollectorSource) -> list[RawItem]:
+        """Fetch with bounded exponential backoff on transient errors.
+
+        Retries up to ``COLLECTOR_MAX_RETRIES`` times (default 3) on
+        network timeouts, connection errors, and 5xx HTTP responses.
+        Non-retryable errors (4xx, parse errors) fail immediately.
+        """
+        max_retries = settings.COLLECTOR_MAX_RETRIES
+        backoff_base = settings.COLLECTOR_RETRY_BACKOFF_BASE
+        last_exc: Exception | None = None
+
+        for attempt in range(max_retries + 1):
+            try:
+                return await self.fetch(source)
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code >= 500:
+                    last_exc = exc
+                    if attempt < max_retries:
+                        wait = backoff_base * (2 ** attempt)
+                        self._log.warning(
+                            f"Fetch returned {exc.response.status_code}, retry {attempt + 1}/{max_retries} in {wait}s",
+                            extra={"context": {"source": source.name}},
+                        )
+                        await asyncio.sleep(wait)
+                        continue
+                # 4xx — don't retry
+                raise
+            except _RETRYABLE_EXCEPTIONS as exc:
+                last_exc = exc
+                if attempt < max_retries:
+                    wait = backoff_base * (2 ** attempt)
+                    self._log.warning(
+                        f"Fetch transient error ({type(exc).__name__}), retry {attempt + 1}/{max_retries} in {wait}s",
+                        extra={"context": {"source": source.name}},
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+                raise
+
+        # Should not reach here, but just in case
+        if last_exc:
+            raise last_exc
+        return []
 
     # ── Pipeline orchestrator ────────────────────────────────────────────
 
@@ -110,9 +187,9 @@ class BaseCollector(ABC):
             extra={"context": {"source": source.name, "url": source.url}},
         )
 
-        # 1. Fetch
+        # 1. Fetch (with retry)
         try:
-            raw_items = await self.fetch(source)
+            raw_items = await self._fetch_with_retry(source)
             result.fetched = len(raw_items)
         except Exception as exc:
             result.errors += 1

@@ -33,6 +33,10 @@ class CollectorSourceRead(BaseModel):
     is_active: bool
     last_collected_at: datetime | None
     collection_interval_minutes: int
+    last_error: str | None = None
+    last_error_at: datetime | None = None
+    consecutive_failures: int = 0
+    total_items_collected: int = 0
     created_at: datetime
     updated_at: datetime
 
@@ -45,3 +49,20 @@ class CollectorSourceUpdate(BaseModel):
     config: dict[str, Any] | None = None
     is_active: bool | None = None
     collection_interval_minutes: int | None = Field(default=None, ge=1)
+
+
+class CollectorSourceHealth(BaseModel):
+    """Health status view for a collector source."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    collector_type: str
+    is_active: bool
+    last_collected_at: datetime | None
+    last_error: str | None = None
+    last_error_at: datetime | None = None
+    consecutive_failures: int = 0
+    total_items_collected: int = 0
+    status: str = "unknown"  # computed: healthy, degraded, failing, inactive
+

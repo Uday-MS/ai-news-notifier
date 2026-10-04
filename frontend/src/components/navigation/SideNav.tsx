@@ -1,3 +1,9 @@
+/**
+ * SideNav — Intelligence platform command rail.
+ * 64px collapsed (lg) → 240px expanded (xl).
+ * Sharp 4px radius, instrument-grade design.
+ */
+
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { NAV_ITEMS } from '@/utils/constants';
@@ -24,48 +30,63 @@ export function SideNav() {
   }, []);
 
   return (
-    <nav className="hidden lg:flex flex-col fixed left-0 top-0 h-screen z-40 border-r border-outline xl:w-[275px] lg:w-[72px] bg-surface" role="navigation" aria-label="Main navigation">
-      <div className="p-3 xl:px-3">
-        <NavLink to="/" className="nav-pill inline-flex !p-3 !gap-0">
-          <span className="material-symbols-outlined text-primary text-[28px] icon-fill">hub</span>
+    <nav
+      className="hidden lg:flex flex-col fixed left-0 top-0 h-screen z-40 border-r border-outline-variant xl:w-[240px] lg:w-[64px] bg-surface"
+      role="navigation"
+      aria-label="Main navigation"
+    >
+      {/* Brand */}
+      <div className="p-3 xl:px-4">
+        <NavLink to="/" className="flex items-center gap-2.5 px-2 py-2 no-underline group">
+          <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-primary text-lg icon-fill">hub</span>
+          </div>
+          <span className="hidden xl:block font-headline text-[15px] font-semibold text-on-surface tracking-tight">
+            Nexus<span className="text-primary">AI</span>
+          </span>
         </NavLink>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-0.5 px-2">
+      {/* Nav Items */}
+      <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-0.5 px-2 mt-1">
         {NAV_ITEMS.map((item) => (
-          <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => cn('nav-pill relative', isActive && 'active')}>
-            <span className="material-symbols-outlined text-[26px] relative">
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === '/'}
+            className={({ isActive }) =>
+              cn('nav-item relative', isActive && 'active')
+            }
+          >
+            <span className="material-symbols-outlined text-[22px] relative shrink-0">
               {item.icon}
               {item.to === '/notifications' && unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-primary text-on-primary text-[10px] font-bold rounded-full px-1 leading-none">
+                <span className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] flex items-center justify-center bg-[var(--c-danger)] text-white text-[9px] font-bold rounded-full px-0.5 leading-none font-mono">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </span>
-            <span className="text-xl hidden xl:inline leading-none">{item.label}</span>
+            <span className="hidden xl:inline text-[14px] leading-none truncate">{item.label}</span>
           </NavLink>
         ))}
       </div>
 
-      <div className="p-3 xl:px-4">
-        <button onClick={() => navigate('/news')}
-          className="w-full bg-primary text-on-primary rounded-full py-3 px-4 font-bold text-[17px] hover:bg-[var(--c-accent-hover)] active:scale-[0.97] transition-all border-none cursor-pointer">
-          <span className="hidden xl:inline">Explore</span>
-          <span className="xl:hidden material-symbols-outlined text-xl">search</span>
-        </button>
-      </div>
-
+      {/* User */}
       {user && (
-        <div className="p-3 xl:px-3 mb-2">
-          <button onClick={logout} className="w-full flex items-center gap-3 nav-pill hover:bg-[var(--c-elevated)] bg-transparent border-none cursor-pointer text-left" title="Logout">
-            <div className="w-10 h-10 rounded-full bg-[var(--c-elevated)] text-on-surface flex items-center justify-center font-semibold text-sm shrink-0">
+        <div className="p-2 xl:px-3 border-t border-outline-variant">
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-2.5 nav-item bg-transparent border-none cursor-pointer text-left"
+            title="Logout"
+          >
+            <div className="w-8 h-8 rounded bg-[var(--c-overlay)] text-on-surface flex items-center justify-center font-semibold text-xs shrink-0 font-headline">
               {user.full_name?.charAt(0)?.toUpperCase() || user.email.charAt(0).toUpperCase()}
             </div>
             <div className="hidden xl:flex flex-col min-w-0 flex-1">
-              <span className="font-semibold text-[15px] text-on-surface truncate">{user.full_name || 'User'}</span>
-              <span className="text-[13px] text-on-surface-variant truncate">{user.email}</span>
+              <span className="font-medium text-[13px] text-on-surface truncate">{user.full_name || 'User'}</span>
+              <span className="text-[11px] text-on-surface-variant truncate font-mono">{user.email}</span>
             </div>
-            <span className="material-symbols-outlined text-on-surface-variant hidden xl:inline text-lg">more_horiz</span>
+            <span className="material-symbols-outlined text-on-surface-variant hidden xl:inline text-base">logout</span>
           </button>
         </div>
       )}

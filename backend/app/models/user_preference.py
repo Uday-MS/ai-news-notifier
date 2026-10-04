@@ -39,6 +39,12 @@ class UserPreference(Base):
     muted_sources: Mapped[list] = mapped_column(
         JSON, default=list, nullable=False
     )
+    preferred_technologies: Mapped[list | None] = mapped_column(
+        JSON, default=list, nullable=True
+    )
+    preferred_organizations: Mapped[list | None] = mapped_column(
+        JSON, default=list, nullable=True
+    )
 
     __table_args__ = (
         Index("ix_user_preferences_user_id", "user_id"),

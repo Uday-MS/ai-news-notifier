@@ -35,6 +35,25 @@ class ProcessedEventRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    # ── LLM Intelligence (Phase 2) ───────────────────────────────────────
+    why_it_matters: str | None = None
+    llm_summary: str | None = None
+    intelligence_type: str | None = None
+    llm_category: str | None = None
+    llm_subcategory: str | None = None
+    llm_importance_score: int | None = None
+    confidence_score: float | None = None
+    relevance_signals: list[str] | None = None
+    llm_entities: dict[str, Any] | None = None
+    llm_keywords: list[str] | None = None
+    llm_provider: str | None = None
+    llm_model: str | None = None
+    llm_prompt_version: str | None = None
+    llm_processed_at: datetime | None = None
+    llm_status: str | None = None
+    llm_error: str | None = None
+    llm_attempt_count: int | None = None
+
 
 class ProcessedEventSummary(BaseModel):
     """Lightweight processed event for list views."""

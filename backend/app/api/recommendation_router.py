@@ -109,6 +109,8 @@ async def set_preferences(
         preferred_sources=body.preferred_sources,
         muted_categories=body.muted_categories,
         muted_sources=body.muted_sources,
+        preferred_technologies=body.preferred_technologies,
+        preferred_organizations=body.preferred_organizations,
     )
     await db.commit()
     return success_response(

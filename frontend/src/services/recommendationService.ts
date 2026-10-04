@@ -10,6 +10,10 @@ import type { FeedItem, PaginationMeta } from './feedService';
 export interface RecommendationItem extends FeedItem {
   recommendation_score: number;
   recommendation_reasons: string[];
+  why_it_matters?: string | null;
+  llm_summary?: string | null;
+  intelligence_type?: string | null;
+  confidence_score?: number | null;
 }
 
 export interface PersonalizedFeedResponse {
@@ -36,6 +40,8 @@ export interface RecommendationPreferences {
   preferred_sources: string[];
   muted_categories: string[];
   muted_sources: string[];
+  preferred_technologies: string[];
+  preferred_organizations: string[];
 }
 
 export interface RecommendationPreferencesInput {
@@ -43,6 +49,8 @@ export interface RecommendationPreferencesInput {
   preferred_sources?: string[];
   muted_categories?: string[];
   muted_sources?: string[];
+  preferred_technologies?: string[];
+  preferred_organizations?: string[];
 }
 
 // ── API Calls ───────────────────────────────────────────────────────────

@@ -68,6 +68,16 @@ class FeedDetail(BaseModel):
     processed_at: datetime | None
     created_at: datetime
 
+    # ── LLM Intelligence (Phase 2) ───────────────────────────────────────
+    why_it_matters: str | None = None
+    llm_summary: str | None = None
+    intelligence_type: str | None = None
+    llm_category: str | None = None
+    confidence_score: float | None = None
+    llm_keywords: list[str] | None = None
+    llm_entities: dict[str, Any] | None = None
+    llm_status: str | None = None
+
 
 # ── Search ───────────────────────────────────────────────────────────────
 

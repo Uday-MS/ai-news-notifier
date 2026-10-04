@@ -6,7 +6,7 @@ import { searchFeed, getTrending, getCategories, type FeedItem, type TrendingRes
 import { cn } from '@/utils/cn';
 
 export default function NewsPage() {
-  useDocumentTitle('Explore — AI News Notifier');
+  useDocumentTitle('Explore — NexusAI');
   const [urlParams] = useSearchParams();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [trending, setTrending] = useState<TrendingResponse | null>(null);
@@ -26,7 +26,7 @@ export default function NewsPage() {
         setItems((prev) => append ? [...prev, ...result.data!.items] : result.data!.items);
         setHasMore(result.data.pagination.has_more);
       }
-    } catch { setError('Failed to load news.'); }
+    } catch { setError('Failed to load intelligence.'); }
     finally { setLoading(false); }
   }, []);
 
@@ -53,26 +53,31 @@ export default function NewsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-md border-b border-outline">
-        <div className="px-4 py-2.5">
-          <h2 className="text-xl font-bold text-on-surface">Explore</h2>
+      <div className="sticky top-0 z-10 bg-surface/90 backdrop-blur-md border-b border-outline-variant">
+        <div className="px-4 py-2.5 flex items-center justify-between">
+          <h2 className="font-headline font-semibold text-[16px] text-on-surface tracking-tight">Explore</h2>
+          {trending && !loading && (
+            <span className="badge badge-neutral">
+              {trending.total_ready} articles
+            </span>
+          )}
         </div>
-        <form onSubmit={handleSearch} className="px-4 pb-3">
+        <form onSubmit={handleSearch} className="px-4 pb-2.5">
           <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search AI news"
-              className="w-full py-2.5 pl-10 pr-4 bg-[var(--c-elevated)] border-none rounded-full text-[15px] text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface transition-all" />
+            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--c-text-3)] text-base">search</span>
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search intelligence..."
+              className="w-full py-2 pl-9 pr-3 bg-[var(--c-elevated)] border border-[var(--c-border-subtle)] rounded text-[13px] text-on-surface placeholder:text-[var(--c-text-3)] focus:outline-none focus:border-primary transition-colors font-body" />
           </div>
         </form>
         {categories.length > 0 && (
-          <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
+          <div className="flex gap-1.5 px-4 pb-2.5 overflow-x-auto no-scrollbar">
             <button onClick={() => handleCategoryFilter(null)}
-              className={cn('px-3 py-1.5 text-[13px] rounded-full border whitespace-nowrap transition-colors cursor-pointer shrink-0',
-                !activeCategory ? 'bg-on-surface text-surface border-on-surface font-semibold' : 'bg-transparent text-on-surface border-[var(--c-border-strong)] hover:bg-[var(--c-elevated)]')}>All</button>
+              className={cn('px-2.5 py-1 text-[11px] rounded border whitespace-nowrap transition-colors cursor-pointer shrink-0 font-mono uppercase tracking-wider',
+                !activeCategory ? 'bg-primary text-[var(--c-accent-text)] border-primary font-medium' : 'bg-transparent text-[var(--c-text-2)] border-[var(--c-border-subtle)] hover:border-[var(--c-border)]')}>All</button>
             {categories.map((cat) => (
               <button key={cat.category} onClick={() => handleCategoryFilter(cat.category)}
-                className={cn('px-3 py-1.5 text-[13px] rounded-full border whitespace-nowrap transition-colors cursor-pointer shrink-0',
-                  activeCategory === cat.category ? 'bg-on-surface text-surface border-on-surface font-semibold' : 'bg-transparent text-on-surface border-[var(--c-border-strong)] hover:bg-[var(--c-elevated)]')}>
+                className={cn('px-2.5 py-1 text-[11px] rounded border whitespace-nowrap transition-colors cursor-pointer shrink-0 font-mono uppercase tracking-wider',
+                  activeCategory === cat.category ? 'bg-primary text-[var(--c-accent-text)] border-primary font-medium' : 'bg-transparent text-[var(--c-text-2)] border-[var(--c-border-subtle)] hover:border-[var(--c-border)]')}>
                 {cat.category.replace(/_/g, ' ')}
               </button>
             ))}
@@ -80,39 +85,36 @@ export default function NewsPage() {
         )}
       </div>
 
-      {trending && !loading && items.length > 0 && (
-        <div className="px-4 py-2 border-b border-outline text-[13px] text-on-surface-variant flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-sm">trending_up</span>
-          {trending.total_ready} articles available
-        </div>
-      )}
-
       {error && (
-        <div className="flex items-center gap-2 text-error px-4 py-3 bg-error-container/30">
-          <span className="material-symbols-outlined text-lg">error</span>
-          <span className="text-sm">{error}</span>
-          <button onClick={() => loadFeed()} className="ml-auto text-sm text-primary hover:underline bg-transparent border-none cursor-pointer">Retry</button>
+        <div className="flex items-center gap-2 text-[var(--c-danger)] px-4 py-3 bg-[var(--c-danger-dim)] border-b border-outline-variant">
+          <span className="material-symbols-outlined text-base">error</span>
+          <span className="text-[13px] font-body">{error}</span>
+          <button onClick={() => loadFeed()} className="ml-auto text-[12px] font-mono text-primary uppercase tracking-wider hover:underline bg-transparent border-none cursor-pointer">Retry</button>
         </div>
       )}
 
       {loading && (
         <div className="flex flex-col">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="px-4 py-3 border-b border-outline animate-pulse">
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-[var(--c-elevated)]" />
-                <div className="flex-1 space-y-2"><div className="h-3 bg-[var(--c-elevated)] rounded w-1/4" /><div className="h-4 bg-[var(--c-elevated)] rounded w-3/4" /><div className="h-3 bg-[var(--c-elevated)] rounded w-full" /></div>
+            <div key={i} className="px-4 py-4 border-b border-outline-variant">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded bg-[var(--c-elevated)] skeleton-shimmer" />
+                <div className="h-3 bg-[var(--c-elevated)] rounded w-24 skeleton-shimmer" />
               </div>
+              <div className="h-4 bg-[var(--c-elevated)] rounded w-4/5 skeleton-shimmer mb-2" />
+              <div className="h-3 bg-[var(--c-elevated)] rounded w-full skeleton-shimmer" />
             </div>
           ))}
         </div>
       )}
 
       {!loading && items.length === 0 && !error && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="material-symbols-outlined text-5xl text-on-surface-variant mb-4">search_off</span>
-          <h3 className="text-lg font-bold text-on-surface mb-2">No articles found</h3>
-          <p className="text-on-surface-variant text-sm max-w-xs">{searchQuery ? 'Try a different search term.' : 'Articles will appear once collectors run.'}</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+          <div className="w-12 h-12 rounded bg-[var(--c-elevated)] flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-2xl text-[var(--c-text-3)]">search_off</span>
+          </div>
+          <h3 className="font-headline font-semibold text-[16px] text-on-surface mb-1.5 tracking-tight">No intelligence found</h3>
+          <p className="text-[var(--c-text-2)] text-[13px] max-w-xs font-body">{searchQuery ? 'Try a different search query.' : 'Intelligence will appear once collectors run.'}</p>
         </div>
       )}
 
@@ -122,7 +124,9 @@ export default function NewsPage() {
 
       {hasMore && !loading && (
         <button onClick={() => loadFeed({ q: searchQuery || undefined, category: activeCategory ?? undefined, offset: items.length }, true)}
-          className="w-full py-4 text-center text-primary font-semibold text-[15px] hover:bg-[var(--c-raised)] transition-colors bg-transparent border-none border-t border-outline cursor-pointer">Show more</button>
+          className="w-full py-3.5 text-center text-primary font-mono text-[12px] font-medium uppercase tracking-wider hover:bg-[var(--c-elevated)] transition-colors bg-transparent border-none border-t border-outline-variant cursor-pointer">
+          Load more →
+        </button>
       )}
     </div>
   );

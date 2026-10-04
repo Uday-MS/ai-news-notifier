@@ -127,15 +127,39 @@ async def test_reset_password(db_session: AsyncSession, test_user):
 
 @pytest.mark.asyncio
 async def test_verify_email(db_session: AsyncSession):
+    """Phase 4: Verify email via OTP (replaces legacy token flow)."""
+    from unittest.mock import MagicMock, AsyncMock, patch
+    from app.schemas.auth import OTPVerifyRequest
+    from app.models.email_otp import EmailOTP
+
     service = _make_service(db_session)
-    user_resp = await service.register(
-        RegisterRequest(email="verify@test.com", password="StrongP@ss1", full_name="V User")
-    )
+
+    with patch("app.services.auth_service.get_email_service") as mock_email:
+        mock_svc = MagicMock()
+        mock_svc.send_otp = AsyncMock(return_value=True)
+        mock_email.return_value = mock_svc
+
+        await service.register(
+            RegisterRequest(email="verify@test.com", password="StrongP@ss1", full_name="V User")
+        )
+
     repo = UserRepository(db_session)
     user = await repo.get_by_email("verify@test.com")
-    assert user is not None and user.verification_token is not None
+    assert user is not None
+    assert user.is_verified is False
 
-    await service.verify_email(VerifyEmailRequest(token=user.verification_token))
+    # Generate a known OTP for testing
+    with patch("app.services.auth_service.get_email_service") as mock_email:
+        mock_svc = MagicMock()
+        mock_svc.send_otp = AsyncMock(return_value=True)
+        mock_email.return_value = mock_svc
+        otp_code = await service._generate_and_send_otp("verify@test.com")
+
+    tokens = await service.verify_email_otp(
+        OTPVerifyRequest(email="verify@test.com", otp_code=otp_code)
+    )
+    assert tokens.access_token
+
     refreshed = await repo.get_by_email("verify@test.com")
     assert refreshed is not None
     assert refreshed.is_verified is True

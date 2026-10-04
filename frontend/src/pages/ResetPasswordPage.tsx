@@ -4,7 +4,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { resetPassword } from '@/services/authService';
 
 export default function ResetPasswordPage() {
-  useDocumentTitle('Reset Password — AI News Notifier');
+  useDocumentTitle('Reset Password — NexusAI');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
@@ -15,83 +15,57 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-
+    e.preventDefault(); setError('');
+    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     setLoading(true);
     try {
       const result = await resetPassword(token, password);
-      if (result.success) {
-        setSuccess(true);
-        setTimeout(() => navigate('/login'), 2000);
-      } else {
-        setError(result.error?.message ?? 'Reset failed.');
-      }
-    } catch {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+      if (result.success) { setSuccess(true); setTimeout(() => navigate('/login'), 2000); }
+      else setError(result.error?.message ?? 'Reset failed.');
+    } catch { setError('Network error. Please try again.'); }
+    finally { setLoading(false); }
   }
 
   return (
-    <div className="w-full max-w-[400px] mx-auto page-transition">
-      {/* Logo */}
+    <div className="w-full max-w-[380px] mx-auto page-transition">
       <div className="flex justify-center mb-8">
         <Link to="/" className="no-underline">
-          <span className="material-symbols-outlined text-primary text-4xl icon-fill">hub</span>
+          <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-primary text-2xl icon-fill">hub</span>
+          </div>
         </Link>
       </div>
 
       {success ? (
         <div className="text-center">
-          <span className="material-symbols-outlined text-6xl text-primary mb-4 block">lock_reset</span>
-          <h1 className="text-3xl font-bold text-on-surface mb-3">Password reset</h1>
-          <p className="text-on-surface-variant font-body mb-8">
-            Your password has been updated. Redirecting to login...
-          </p>
+          <div className="w-14 h-14 rounded bg-[var(--c-tertiary-dim)] flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-3xl text-[var(--c-tertiary)]">lock_reset</span>
+          </div>
+          <h1 className="font-headline font-bold text-[28px] text-on-surface mb-2 tracking-tight">Password reset</h1>
+          <p className="text-[var(--c-text-2)] text-[13px] font-body">Your password has been updated. Redirecting...</p>
         </div>
       ) : (
         <>
-          <h1 className="text-3xl font-bold text-on-surface mb-2">Reset your password</h1>
-          <p className="text-on-surface-variant font-body mb-6">Enter your new password below.</p>
+          <h1 className="font-headline font-bold text-[28px] text-on-surface mb-2 tracking-tight text-center">Reset your password</h1>
+          <p className="text-[var(--c-text-2)] text-[13px] font-body text-center mb-8">Enter your new password below.</p>
 
           {error && (
-            <div className="flex items-center gap-2 text-error mb-4 p-3 bg-error-container rounded-lg">
-              <span className="material-symbols-outlined text-lg">error</span>
-              <span className="font-body text-sm">{error}</span>
+            <div className="flex items-center gap-2 text-[var(--c-danger)] mb-4 p-3 bg-[var(--c-danger-dim)] rounded border border-[var(--c-danger)]/20">
+              <span className="material-symbols-outlined text-base">error</span>
+              <span className="font-body text-[13px]">{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <input
-              className="input-field"
-              id="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              type="password"
-              placeholder="New password"
-            />
-            <input
-              className="input-field"
-              id="rp-confirm"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              type="password"
-              placeholder="Confirm new password"
-            />
-            <button
-              disabled={loading}
-              className="w-full bg-primary text-on-primary py-3 rounded-full font-bold text-[15px] font-body hover:opacity-90 transition-opacity border-none cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-              type="submit"
-            >
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <div>
+              <label className="type-mono-label text-[var(--c-text-3)] mb-1.5 block">New Password</label>
+              <input className="input-field" id="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required type="password" placeholder="••••••••" />
+            </div>
+            <div>
+              <label className="type-mono-label text-[var(--c-text-3)] mb-1.5 block">Confirm Password</label>
+              <input className="input-field" id="rp-confirm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required type="password" placeholder="••••••••" />
+            </div>
+            <button disabled={loading} className="btn-primary w-full py-2.5 text-[14px] mt-1 btn-press disabled:opacity-50" type="submit">
               {loading && <span className="w-4 h-4 border-2 border-transparent border-t-current rounded-full animate-spin" />}
               {loading ? 'Resetting...' : 'Reset password'}
             </button>

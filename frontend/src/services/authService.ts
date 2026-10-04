@@ -76,3 +76,27 @@ export function logoutUser() {
   clearTokens();
   window.location.href = '/login';
 }
+
+// ── Phase 4: OTP Verification ───────────────────────────────────────────
+
+export async function verifyEmailOTP(email: string, otpCode: string) {
+  return apiClient<TokenData>('/auth/verify-email/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ email, otp_code: otpCode }),
+  });
+}
+
+export async function resendOTP(email: string) {
+  return apiClient('/auth/verify-email/resend', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+// ── Phase 4: Google OAuth ───────────────────────────────────────────────
+
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1';
+
+export function getGoogleLoginUrl(): string {
+  return `${API_BASE_URL}/auth/google/login`;
+}

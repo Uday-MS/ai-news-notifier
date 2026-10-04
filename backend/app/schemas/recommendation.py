@@ -22,6 +22,8 @@ class UserPreferenceRequest(BaseModel):
     preferred_sources: list[str] = Field(default_factory=list)
     muted_categories: list[str] = Field(default_factory=list)
     muted_sources: list[str] = Field(default_factory=list)
+    preferred_technologies: list[str] = Field(default_factory=list)
+    preferred_organizations: list[str] = Field(default_factory=list)
 
 
 class UserPreferenceResponse(BaseModel):
@@ -34,6 +36,8 @@ class UserPreferenceResponse(BaseModel):
     preferred_sources: list[str]
     muted_categories: list[str]
     muted_sources: list[str]
+    preferred_technologies: list[str] = Field(default_factory=list)
+    preferred_organizations: list[str] = Field(default_factory=list)
 
 
 # ── Recommendation Items ────────────────────────────────────────────────
@@ -44,6 +48,10 @@ class RecommendationItem(FeedItem):
 
     recommendation_score: float
     recommendation_reasons: list[str]
+    why_it_matters: str | None = None
+    llm_summary: str | None = None
+    intelligence_type: str | None = None
+    confidence_score: float | None = None
 
 
 class PersonalizedFeedResponse(BaseModel):

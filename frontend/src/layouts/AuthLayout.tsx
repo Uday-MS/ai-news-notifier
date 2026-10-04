@@ -1,8 +1,8 @@
 import { Outlet } from 'react-router-dom';
 
 /**
- * Full-screen layout for authentication pages.
- * Centered content with subtle themed background.
+ * AuthLayout — Full-screen intelligence auth shell.
+ * Dark obsidian background with centered content.
  */
 export function AuthLayout() {
   return (
