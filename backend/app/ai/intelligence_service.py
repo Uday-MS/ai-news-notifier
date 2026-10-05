@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import and_, case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.intelligence_prompt import (
@@ -27,6 +27,7 @@ from app.ai.llm_provider import (
     LLMAuthenticationError,
     LLMProvider,
     LLMProviderError,
+    LLMQuotaExhaustedError,
 )
 from app.core.logging import get_logger
 from app.models.event import CollectedEvent
@@ -92,13 +93,28 @@ class IntelligenceService:
         Returns:
             Summary dict with counts.
         """
-        # Find events that need LLM enrichment
+        # Find events that need LLM enrichment, prioritizing pending over failed retries
         stmt = (
             select(ProcessedEvent)
             .where(
-                ProcessedEvent.llm_status.in_(["pending", None, "failed"])
+                or_(
+                    ProcessedEvent.llm_status.in_(["pending", None]),
+                    and_(
+                        ProcessedEvent.llm_status == "failed",
+                        or_(
+                            ProcessedEvent.llm_attempt_count == None,  # noqa: E711
+                            ProcessedEvent.llm_attempt_count < 3,
+                        ),
+                    ),
+                )
             )
-            .order_by(ProcessedEvent.created_at.asc())
+            .order_by(
+                case(
+                    (ProcessedEvent.llm_status.in_(["pending", None]), 0),
+                    else_=1,
+                ),
+                ProcessedEvent.created_at.asc(),
+            )
             .limit(limit)
         )
         result = await self._db.execute(stmt)
@@ -126,6 +142,14 @@ class IntelligenceService:
                 # Don't continue if auth is broken
                 summary["failed"] += 1
                 logger.error("LLM authentication failed — stopping batch")
+                break
+            except LLMQuotaExhaustedError as exc:
+                # Daily quota exhausted — stop batch immediately without hammering
+                summary["failed"] += 1
+                logger.warning(
+                    f"LLM quota exhausted — stopping batch: {exc}",
+                    extra={"context": {"processed_id": str(processed.id)}},
+                )
                 break
             except Exception as exc:
                 summary["failed"] += 1
@@ -212,6 +236,12 @@ class IntelligenceService:
         except LLMAuthenticationError:
             processed.llm_status = "failed"
             processed.llm_error = "Authentication failed — API key missing or invalid"
+            await self._db.flush()
+            raise
+
+        except LLMQuotaExhaustedError as exc:
+            processed.llm_status = "failed"
+            processed.llm_error = f"Quota exhausted: {exc}"[:500]
             await self._db.flush()
             raise
 

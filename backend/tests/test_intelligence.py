@@ -46,10 +46,13 @@ from app.ai.llm_provider import (
     LLMAuthenticationError,
     LLMProvider,
     LLMProviderError,
+    LLMQuotaExhaustedError,
     LLMRateLimitError,
     LLMResponseError,
     LLMTimeoutError,
     get_llm_provider,
+    is_quota_exhausted_error,
+    parse_retry_after,
 )
 from app.models.event import CollectedEvent, EventType
 from app.models.processed_event import ProcessedEvent, AICategory, ProcessingStatus
@@ -642,3 +645,231 @@ class TestIntelligenceService:
         await service.enrich_single(processed.id, force=True)
         await db_session.commit()
         assert processed.llm_attempt_count == 2
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# 6. LLM Quota Exhaustion & Circuit Breaker Tests
+# ══════════════════════════════════════════════════════════════════════════
+
+
+class TestLLMQuotaAndFailureHandling:
+    """Focused tests for Gemini quota exhaustion, retry prevention, and recovery."""
+
+    def setup_method(self):
+        """Reset quota cooldown before each test."""
+        LLMProvider.reset_quota_exhaustion()
+
+    def teardown_method(self):
+        """Reset quota cooldown after each test."""
+        LLMProvider.reset_quota_exhaustion()
+
+    def test_detect_gemini_quota_exhaustion_production_error(self):
+        """Must correctly identify the exact Render production error string."""
+        production_error = (
+            "429 You exceeded your current quota, please check your plan and billing details. "
+            "For more information on this error, read: "
+            "https://ai.google.dev/gemini-api/docs/troubleshooting/error-codes "
+            "Quota metric: generativelanguage.googleapis.com/generate_content_free_tier_requests "
+            "Quota: GenerateRequestsPerDayPerProjectPerModel-FreeTier Limit: 20 "
+            "Model: gemini-3.6-flash Please retry after 9h39m12s"
+        )
+        assert is_quota_exhausted_error(Exception(production_error)) is True
+
+    def test_detect_transient_rate_limit_vs_quota_exhaustion(self):
+        """Transient rate limits (e.g. 429 Too Many Requests without daily quota) must not be flagged as quota exhaustion."""
+        transient_error = "429 Too Many Requests: Rate limit exceeded, please retry in 2 seconds"
+        assert is_quota_exhausted_error(Exception(transient_error)) is False
+
+    def test_parse_retry_after_formats(self):
+        """Must parse hours, minutes, seconds and raw seconds from retry error strings."""
+        assert parse_retry_after("Please retry after 9h39m12s") == 34752.0
+        assert parse_retry_after("Please retry after 2h") == 7200.0
+        assert parse_retry_after("Please retry after 45s") == 45.0
+        assert parse_retry_after("retry_delay: 600") == 600.0
+        assert parse_retry_after("No delay info here") is None
+
+    @pytest.mark.asyncio
+    async def test_generate_no_retries_on_quota_exhaustion(self):
+        """Quota exhaustion must NEVER perform retries — exactly 1 attempt only."""
+        provider = GeminiProvider(
+            api_key="test-key",
+            model="gemini-2.0-flash",
+            max_retries=3,
+            retry_backoff_base=0.01,
+        )
+        call_count = 0
+
+        async def mock_call(system, user):
+            nonlocal call_count
+            call_count += 1
+            raise LLMQuotaExhaustedError("Daily quota exceeded", retry_after=3600.0)
+
+        provider._call_api = mock_call
+
+        with pytest.raises(LLMQuotaExhaustedError):
+            await provider.generate("sys", "user")
+
+        # Must not retry: exactly 1 call
+        assert call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_cooldown_blocks_subsequent_calls_without_api_call(self):
+        """Active cooldown must reject requests immediately without calling the API."""
+        provider = GeminiProvider(
+            api_key="test-key",
+            model="gemini-2.0-flash",
+        )
+        provider.record_quota_exhaustion(retry_after=600.0)
+        assert provider.is_quota_exhausted() is True
+
+        call_count = 0
+
+        async def mock_call(system, user):
+            nonlocal call_count
+            call_count += 1
+            return '{"ok": true}'
+
+        provider._call_api = mock_call
+
+        with pytest.raises(LLMQuotaExhaustedError, match="in quota cooldown"):
+            await provider.generate("sys", "user")
+
+        # Zero API calls made while cooldown is active
+        assert call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_cooldown_reset_allows_recovery(self):
+        """Resetting quota exhaustion must allow requests to proceed normally."""
+        provider = GeminiProvider(
+            api_key="test-key",
+            model="gemini-2.0-flash",
+        )
+        provider.record_quota_exhaustion(retry_after=600.0)
+        assert provider.is_quota_exhausted() is True
+
+        # Recovery / cooldown reset
+        provider.reset_quota_exhaustion()
+        assert provider.is_quota_exhausted() is False
+
+        provider._call_api = AsyncMock(return_value='{"status": "recovered"}')
+        result = await provider.generate("sys", "user")
+        assert result == {"status": "recovered"}
+
+    @pytest.mark.asyncio
+    async def test_enrich_pending_stops_batch_on_quota_exhaustion(self, db_session):
+        """When quota is exhausted on item 1, batch must stop immediately without processing item 2."""
+        from app.repositories.event_repository import EventRepository
+        from app.services.pipeline.pipeline_service import PipelineService
+        from app.ai.intelligence_service import IntelligenceService
+
+        event_repo = EventRepository(db_session)
+        pipeline = PipelineService(db_session)
+
+        # Create two events
+        e1 = await event_repo.create(
+            title="Event 1",
+            summary="Summary 1 about AI developments.",
+            source="src",
+            source_url="https://example.com/1",
+            published_at=datetime.now(timezone.utc),
+            event_type=EventType.NEWS,
+            organization="Org1",
+            tags=["ai"],
+            extra_metadata={},
+            collector_id="rss",
+            content_hash="hash_batch_001",
+        )
+        e2 = await event_repo.create(
+            title="Event 2",
+            summary="Summary 2 about AI developments.",
+            source="src",
+            source_url="https://example.com/2",
+            published_at=datetime.now(timezone.utc),
+            event_type=EventType.NEWS,
+            organization="Org2",
+            tags=["ai"],
+            extra_metadata={},
+            collector_id="rss",
+            content_hash="hash_batch_002",
+        )
+        await db_session.commit()
+
+        await pipeline.process_single(e1.id)
+        await pipeline.process_single(e2.id)
+        await db_session.commit()
+
+        # Mock provider that raises quota exhaustion on first generate call
+        generate_calls = 0
+
+        async def mock_generate(system, user):
+            nonlocal generate_calls
+            generate_calls += 1
+            raise LLMQuotaExhaustedError("Daily quota reached: 20 RPD cap", retry_after=3600.0)
+
+        mock_provider = MagicMock(spec=LLMProvider)
+        mock_provider.provider_name = "gemini"
+        mock_provider.model_name = "gemini-2.0-flash"
+        mock_provider.generate = mock_generate
+
+        service = IntelligenceService(db_session, mock_provider)
+        summary = await service.enrich_pending(limit=10)
+        await db_session.commit()
+
+        # Batch must have stopped immediately after 1 failure
+        assert summary["failed"] == 1
+        assert summary["enriched"] == 0
+        assert generate_calls == 1  # Event 2 was NOT attempted!
+
+    @pytest.mark.asyncio
+    async def test_event_preserved_when_quota_exhausted(self, db_session):
+        """When LLM enrichment fails due to quota exhaustion, all collected and processed data remains safe."""
+        from app.repositories.event_repository import EventRepository
+        from app.services.pipeline.pipeline_service import PipelineService
+        from app.ai.intelligence_service import IntelligenceService
+
+        event_repo = EventRepository(db_session)
+        pipeline = PipelineService(db_session)
+
+        e = await event_repo.create(
+            title="Safe Event",
+            summary="This summary must not be destroyed by an LLM failure.",
+            source="safe-src",
+            source_url="https://example.com/safe",
+            published_at=datetime.now(timezone.utc),
+            event_type=EventType.NEWS,
+            organization="SafeOrg",
+            tags=["important"],
+            extra_metadata={},
+            collector_id="rss",
+            content_hash="hash_safe_001",
+        )
+        await db_session.commit()
+
+        processed = await pipeline.process_single(e.id)
+        await db_session.commit()
+
+        # Verify initial rule-based processing values
+        assert processed.cleaned_title == "Safe Event"
+        assert processed.cleaned_summary != ""
+        assert processed.ai_category is not None
+
+        mock_provider = MagicMock(spec=LLMProvider)
+        mock_provider.provider_name = "gemini"
+        mock_provider.model_name = "gemini-2.0-flash"
+        mock_provider.generate = AsyncMock(
+            side_effect=LLMQuotaExhaustedError("Free tier 20 quota exceeded")
+        )
+
+        service = IntelligenceService(db_session, mock_provider)
+        with pytest.raises(LLMQuotaExhaustedError):
+            await service.enrich_single(processed.id)
+        await db_session.commit()
+
+        # Check that the event was safely preserved
+        assert processed.collected_event_id == e.id
+        assert processed.cleaned_title == "Safe Event"
+        assert processed.llm_status == "failed"
+        assert "Quota exhausted" in processed.llm_error
+        # No fake content was generated
+        assert processed.llm_summary is None
+        assert processed.why_it_matters is None

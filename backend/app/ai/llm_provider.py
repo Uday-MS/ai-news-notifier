@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import time
 from abc import ABC, abstractmethod
 from typing import Any
@@ -17,6 +18,9 @@ from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger("llm.provider")
+
+# Global cooldown state across provider instances
+_quota_exhausted_until: float | None = None
 
 
 # ── Provider Abstraction ────────────────────────────────────────────────
@@ -31,7 +35,20 @@ class LLMAuthenticationError(LLMProviderError):
 
 
 class LLMRateLimitError(LLMProviderError):
-    """Rate limit exceeded."""
+    """Rate limit exceeded (transient)."""
+
+
+class LLMQuotaExhaustedError(LLMProviderError):
+    """Daily or plan quota exhausted (non-transient).
+
+    Indicates that the LLM provider has exhausted its request quota
+    (e.g. Google Gemini Free Tier 20 RPD cap) and further calls should
+    be suspended until the quota resets.
+    """
+
+    def __init__(self, message: str, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 class LLMTimeoutError(LLMProviderError):
@@ -40,6 +57,51 @@ class LLMTimeoutError(LLMProviderError):
 
 class LLMResponseError(LLMProviderError):
     """Malformed or unparseable response."""
+
+
+def is_quota_exhausted_error(exc: Exception) -> bool:
+    """Detect whether an exception represents non-transient daily quota exhaustion."""
+    error_msg = str(exc).lower()
+    signals = [
+        "exceeded your current quota",
+        "generaterequestsperday",
+        "generate_content_free_tier",
+        "quota metric",
+        "check your plan and billing details",
+        "free_tier_requests",
+    ]
+    if any(sig in error_msg for sig in signals):
+        return True
+    if "quota" in error_msg and ("429" in error_msg or "resource_exhausted" in error_msg):
+        return True
+    return False
+
+
+def parse_retry_after(error_str: str) -> float | None:
+    """Attempt to parse retry delay (in seconds) from error string."""
+    text = error_str.lower()
+    # Pattern: "retry after 9h39m12s" or "retry after 9h 39m" or "retry after 12s"
+    hms_match = re.search(
+        r"retry after\s+(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?\s*(?:(\d+)\s*s)?",
+        text,
+    )
+    if hms_match and any(hms_match.groups()):
+        h = int(hms_match.group(1) or 0)
+        m = int(hms_match.group(2) or 0)
+        s = int(hms_match.group(3) or 0)
+        total = h * 3600 + m * 60 + s
+        if total > 0:
+            return float(total)
+
+    # Pattern: "retry_delay: 34740" or "seconds: 34740" or "retry-after: 34740"
+    sec_match = re.search(
+        r"(?:seconds|retry[-_]delay|retry[-_]after)[:\s]+(\d+)",
+        text,
+    )
+    if sec_match:
+        return float(sec_match.group(1))
+
+    return None
 
 
 class LLMProvider(ABC):
@@ -59,6 +121,38 @@ class LLMProvider(ABC):
         self.max_retries = max_retries
         self.retry_backoff_base = retry_backoff_base
         self.request_timeout = request_timeout
+
+    @classmethod
+    def record_quota_exhaustion(cls, retry_after: float | None = None) -> None:
+        """Record quota exhaustion and set global cooldown."""
+        global _quota_exhausted_until
+        cooldown = (
+            retry_after
+            if (retry_after is not None and retry_after > 0)
+            else float(settings.LLM_QUOTA_COOLDOWN_SECONDS)
+        )
+        _quota_exhausted_until = time.time() + cooldown
+        logger.warning(
+            f"LLM quota exhausted. Global cooldown set for {cooldown:.0f}s",
+            extra={"context": {"cooldown_seconds": cooldown}},
+        )
+
+    @classmethod
+    def is_quota_exhausted(cls) -> bool:
+        """Check if provider is in quota exhaustion cooldown."""
+        global _quota_exhausted_until
+        if _quota_exhausted_until is None:
+            return False
+        if time.time() >= _quota_exhausted_until:
+            _quota_exhausted_until = None
+            return False
+        return True
+
+    @classmethod
+    def reset_quota_exhaustion(cls) -> None:
+        """Reset quota exhaustion state."""
+        global _quota_exhausted_until
+        _quota_exhausted_until = None
 
     @property
     @abstractmethod
@@ -89,16 +183,25 @@ class LLMProvider(ABC):
             Parsed dict from the LLM JSON response.
 
         Raises:
+            LLMQuotaExhaustedError: Immediately if quota cooldown is active or quota exceeded.
+            LLMAuthenticationError: Immediately on auth error (no retries).
             LLMProviderError: After all retries are exhausted.
         """
+        if self.is_quota_exhausted():
+            remaining = int((_quota_exhausted_until or 0) - time.time())
+            raise LLMQuotaExhaustedError(
+                f"LLM provider is in quota cooldown (resets in ~{max(0, remaining)}s)",
+                retry_after=max(0, remaining),
+            )
+
         last_error: Exception | None = None
 
         for attempt in range(1, self.max_retries + 1):
             try:
                 raw = await self._call_api(system_prompt, user_prompt)
                 return self._parse_json(raw)
-            except LLMAuthenticationError:
-                # Don't retry auth failures
+            except (LLMAuthenticationError, LLMQuotaExhaustedError):
+                # Don't retry auth or daily quota exhaustion failures
                 raise
             except (LLMRateLimitError, LLMTimeoutError) as exc:
                 last_error = exc
@@ -232,6 +335,13 @@ class GeminiProvider(LLMProvider):
         except LLMProviderError:
             raise
         except Exception as exc:
+            if is_quota_exhausted_error(exc):
+                retry_after = parse_retry_after(str(exc))
+                self.record_quota_exhaustion(retry_after)
+                raise LLMQuotaExhaustedError(
+                    f"Gemini quota exhausted: {exc}", retry_after=retry_after
+                ) from exc
+
             error_msg = str(exc).lower()
             if "429" in error_msg or "resource_exhausted" in error_msg:
                 raise LLMRateLimitError(f"Rate limited: {exc}") from exc

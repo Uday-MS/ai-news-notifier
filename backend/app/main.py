@@ -115,10 +115,17 @@ async def _background_pipeline_loop() -> None:
 
                     provider = get_llm_provider()
                     if provider is not None:
-                        async with async_session_factory() as db:
-                            intel_svc = IntelligenceService(db, provider)
-                            enrichment_result = await intel_svc.enrich_pending(limit=20)
-                            await db.commit()
+                        if provider.is_quota_exhausted():
+                            logger.info(
+                                "LLM provider in quota exhaustion cooldown — skipping enrichment this cycle"
+                            )
+                        else:
+                            async with async_session_factory() as db:
+                                intel_svc = IntelligenceService(db, provider)
+                                enrichment_result = await intel_svc.enrich_pending(
+                                    limit=settings.LLM_BATCH_SIZE
+                                )
+                                await db.commit()
                 except Exception as exc:
                     logger.warning(
                         "Background LLM enrichment failed (non-fatal)",

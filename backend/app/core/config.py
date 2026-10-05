@@ -65,12 +65,14 @@ class Settings(BaseSettings):
     # ── LLM Intelligence ────────────────────────────────────────────────
     GEMINI_API_KEY: str = ""
     LLM_PROVIDER: str = "gemini"
-    LLM_MODEL: str = "gemini-3.6-flash"
+    LLM_MODEL: str = "gemini-2.0-flash"
     LLM_MAX_RETRIES: int = 3
     LLM_RETRY_BACKOFF_BASE: float = 2.0
     LLM_REQUEST_TIMEOUT: int = 30
     LLM_MAX_TOKENS: int = 2048
     INTELLIGENCE_PROMPT_VERSION: str = "1.0"
+    LLM_BATCH_SIZE: int = 10
+    LLM_QUOTA_COOLDOWN_SECONDS: int = 3600
 
     @property
     def is_production(self) -> bool:
