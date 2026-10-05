@@ -20,8 +20,13 @@ async def test_health_check(client: AsyncClient):
 async def test_root_endpoint(client: AsyncClient):
     response = await client.get("/")
     assert response.status_code == 200
-    data = response.json()
-    assert data == {
+    assert "text/html" in response.headers.get("content-type", "")
+    assert "<!doctype html>" in response.text.lower() or "html" in response.text.lower()
+
+    # Verify JSON response when specifically requested via Accept header
+    json_resp = await client.get("/", headers={"Accept": "application/json"})
+    assert json_resp.status_code == 200
+    assert json_resp.json() == {
         "status": "ok",
         "service": "AI News Notifier API",
     }

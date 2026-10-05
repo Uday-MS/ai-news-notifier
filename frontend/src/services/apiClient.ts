@@ -2,7 +2,9 @@
  * API Client — centralized HTTP wrapper with auth token management.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.PROD ? '/api/v1' : 'http://localhost:8000/api/v1');
 
 interface ApiResponse<T = unknown> {
   success: boolean;

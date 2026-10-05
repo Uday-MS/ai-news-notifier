@@ -5,9 +5,12 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.exceptions import AppException
@@ -200,16 +203,42 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     )
 
 
+# ── Static Files & Frontend SPA Setup ────────────────────────────────────
+
+# Check container path /app/static first, then fallback to local frontend/dist
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+if not STATIC_DIR.exists():
+    local_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+    if local_dist.exists():
+        STATIC_DIR = local_dist
+
+if (STATIC_DIR / "assets").exists():
+    app.mount("/assets", StaticFiles(directory=str(STATIC_DIR / "assets")), name="assets")
+
+
 # ── Root Endpoint ────────────────────────────────────────────────────────
 
 
-@app.get("/", tags=["Root"])
-async def root() -> dict[str, str]:
-    """Root endpoint for service identification and health check."""
-    return {
+@app.get("/", tags=["Frontend"])
+async def root(request: Request) -> Response:
+    """Serve React frontend index.html at root, or JSON if specifically requested."""
+    accept = request.headers.get("accept", "")
+    index_file = STATIC_DIR / "index.html"
+
+    # Return JSON service info only if specifically requested via Accept header
+    if "application/json" in accept and "text/html" not in accept:
+        return JSONResponse({
+            "status": "ok",
+            "service": "AI News Notifier API",
+        })
+
+    if index_file.exists():
+        return FileResponse(index_file, media_type="text/html")
+
+    return JSONResponse({
         "status": "ok",
         "service": "AI News Notifier API",
-    }
+    })
 
 
 # ── Routers ──────────────────────────────────────────────────────────────
@@ -225,3 +254,36 @@ app.include_router(notification_router, prefix=settings.API_V1_PREFIX)
 app.include_router(delivery_router, prefix=settings.API_V1_PREFIX)
 app.include_router(integration_router, prefix=settings.API_V1_PREFIX)
 app.include_router(saved_router, prefix=settings.API_V1_PREFIX)
+
+
+# ── SPA Fallback (Client-Side Routes) ────────────────────────────────────
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+async def spa_fallback(full_path: str) -> Response:
+    """Fallback handler for React Router client-side routes.
+
+    Serves static files directly if present in STATIC_DIR, or index.html for client routes.
+    Never intercepts /api/v1/*, /docs, /redoc, or /openapi.json.
+    """
+    # Guard backend API and documentation routes
+    if (
+        full_path.startswith("api/")
+        or full_path == "api"
+        or full_path == "docs"
+        or full_path == "redoc"
+        or full_path == "openapi.json"
+    ):
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+    # Check for direct static file (e.g. /favicon.svg, /icons.svg)
+    file_path = (STATIC_DIR / full_path).resolve()
+    if file_path.is_file() and str(file_path).startswith(str(STATIC_DIR)):
+        return FileResponse(file_path)
+
+    # Client-side route fallback -> index.html
+    index_file = STATIC_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file, media_type="text/html")
+
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})

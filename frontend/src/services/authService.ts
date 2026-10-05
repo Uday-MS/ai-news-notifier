@@ -2,7 +2,7 @@
  * Authentication service — API calls for auth endpoints.
  */
 
-import { apiClient, storeTokens, clearTokens } from './apiClient';
+import { apiClient, storeTokens, clearTokens, API_BASE_URL } from './apiClient';
 
 export interface AuthUser {
   id: string;
@@ -94,9 +94,6 @@ export async function resendOTP(email: string) {
 }
 
 // ── Phase 4: Google OAuth ───────────────────────────────────────────────
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1';
-
 export function getGoogleLoginUrl(): string {
   return `${API_BASE_URL}/auth/google/login`;
 }
