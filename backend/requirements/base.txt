@@ -14,6 +14,7 @@ alembic>=1.14.0,<2.0.0
 python-jose[cryptography]>=3.3.0,<4.0.0
 passlib[bcrypt]>=1.7.4,<2.0.0
 python-multipart>=0.0.12
+google-auth-oauthlib>=1.2.0,<2.0.0
 
 # Cache
 redis>=5.2.0,<6.0.0
@@ -23,3 +24,6 @@ httpx>=0.27.0,<1.0.0
 
 # Feed Parsing (Collectors)
 feedparser>=6.0.0,<7.0.0
+
+# LLM Intelligence
+google-generativeai>=0.8.0,<1.0.0
