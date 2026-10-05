@@ -48,11 +48,11 @@ class EmailService:
 
             greeting = f"Hi {full_name}," if full_name else "Hi,"
 
-            params = resend.Emails.SendParams(
-                sender=self._from_email,
-                to=[to_email],
-                subject="Your AI News Notifier Verification Code",
-                html=f"""
+            params: resend.Emails.SendParams = {
+                "from": self._from_email,
+                "to": [to_email],
+                "subject": "Your AI News Notifier Verification Code",
+                "html": f"""
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
                     <h2 style="color: #1a1a2e; margin-bottom: 8px;">Verify your email</h2>
                     <p style="color: #666; font-size: 15px; line-height: 1.5;">{greeting}</p>
@@ -65,10 +65,11 @@ class EmailService:
                     <p style="color: #999; font-size: 12px;">AI News Notifier — Your personalized AI intelligence feed.</p>
                 </div>
                 """,
-            )
+            }
 
             email = resend.Emails.send(params)
-            logger.info("OTP email sent to %s (id: %s)", to_email, email.get("id", "?"))
+            email_id = email.get("id", "?") if isinstance(email, dict) else getattr(email, "id", "?")
+            logger.info("OTP email sent to %s (id: %s)", to_email, email_id)
             return True
 
         except Exception as exc:
