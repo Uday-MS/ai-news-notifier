@@ -193,6 +193,18 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     )
 
 
+# ── Root Endpoint ────────────────────────────────────────────────────────
+
+
+@app.get("/", tags=["Root"])
+async def root() -> dict[str, str]:
+    """Root endpoint for service identification and health check."""
+    return {
+        "status": "ok",
+        "service": "AI News Notifier API",
+    }
+
+
 # ── Routers ──────────────────────────────────────────────────────────────
 
 app.include_router(health_router, prefix=settings.API_V1_PREFIX)
